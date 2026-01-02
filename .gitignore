@@ -1,0 +1,23 @@
+# Python
+**/__pycache__/
+**/*.py[cod]
+
+# Node
+**/node_modules/
+**/dist/
+**/.vite/
+
+# Generated workspaces/output
+backend/orchestrator/generated_workspaces/
+workspace/
+
+# Env files (never commit secrets)
+**/.env
+**/.env.*
+!**/.env.example
+
+# Logs
+**/*.log
+
+# VS Code
+.vscode/

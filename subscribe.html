@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CodeLaunchAI · Subscribe</title>
+    <style>
+      :root {
+        --bg-deep: #070b16;
+        --bg-muted: #0f1627;
+        --text-primary: #f5f7ff;
+        --text-muted: #9fb3c8;
+        --panel: rgba(13, 22, 45, 0.88);
+        --border: rgba(255, 255, 255, 0.12);
+        --accent: #ff6b5e;
+        --accent-secondary: #5de0e6;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+        color: var(--text-primary);
+        background: radial-gradient(1200px 800px at 30% 10%, rgba(93, 224, 230, 0.12), transparent 60%),
+          radial-gradient(1000px 700px at 80% 40%, rgba(255, 107, 94, 0.12), transparent 55%), var(--bg-deep);
+      }
+      .shell {
+        max-width: 920px;
+        margin: 0 auto;
+        padding: 28px 18px 48px;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+      }
+      .brand {
+        font-weight: 800;
+        letter-spacing: 0.2px;
+      }
+      a {
+        color: var(--accent-secondary);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .card {
+        margin-top: 18px;
+        border: 1px solid var(--border);
+        background: var(--panel);
+        border-radius: 16px;
+        padding: 18px;
+      }
+      h1 {
+        margin: 0 0 6px;
+        font-size: 28px;
+      }
+      p {
+        margin: 0;
+        color: var(--text-muted);
+        line-height: 1.5;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-top: 16px;
+      }
+      @media (min-width: 760px) {
+        .grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      label {
+        display: block;
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-bottom: 6px;
+      }
+      input,
+      select {
+        width: 100%;
+        height: 42px;
+        padding: 0 12px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text-primary);
+        outline: none;
+      }
+
+      .row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: flex-end;
+        margin-top: 14px;
+      }
+      .btn {
+        height: 42px;
+        padding: 0 14px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text-primary);
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .btn.primary {
+        border: none;
+        background: linear-gradient(120deg, var(--accent), var(--accent-secondary));
+        color: #090b12;
+      }
+      .btn:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .status {
+        margin-top: 12px;
+        font-size: 13px;
+        color: var(--text-muted);
+        min-height: 18px;
+      }
+      .status.ok {
+        color: #7be7c3;
+      }
+      .status.err {
+        color: #ff9a92;
+      }
+
+      .tiny {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header>
+        <div class="brand">CodeLaunchAI</div>
+        <nav>
+          <a href="/">Home</a>
+          <span style="opacity: 0.5; margin: 0 10px">·</span>
+          <a href="/app/#/builder">Builder</a>
+        </nav>
+      </header>
+
+      <div class="card">
+        <h1>Subscribe</h1>
+        <p>Create your account and choose a plan. After payment, you’ll be able to download ZIP exports.</p>
+
+        <div class="grid" style="margin-top: 14px">
+          <div>
+            <label for="name">Name (optional)</label>
+            <input id="name" type="text" placeholder="Your name" />
+          </div>
+          <div>
+            <label for="email">Email</label>
+            <input id="email" type="email" placeholder="you@example.com" />
+          </div>
+
+          <div>
+            <label for="plan">Plan</label>
+            <select id="plan">
+              <option value="student">Student</option>
+              <option value="pro" selected>Pro</option>
+            </select>
+          </div>
+          <div>
+            <label for="interval">Billing</label>
+            <select id="interval">
+              <option value="month" selected>Monthly</option>
+              <option value="year">Yearly</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <button id="cancel" class="btn" type="button">Cancel</button>
+          <button id="subscribe" class="btn primary" type="button">Continue to Checkout</button>
+        </div>
+
+        <div id="status" class="status"></div>
+        <div class="tiny">Already paid? After Stripe redirects back, this page will show confirmation.</div>
+      </div>
+    </div>
+
+    <script>
+      const ORCH_BASE = 'http://127.0.0.1:7080';
+
+      const statusEl = document.getElementById('status');
+      const nameEl = document.getElementById('name');
+      const emailEl = document.getElementById('email');
+      const planEl = document.getElementById('plan');
+      const intervalEl = document.getElementById('interval');
+      const subscribeBtn = document.getElementById('subscribe');
+      const cancelBtn = document.getElementById('cancel');
+
+      function setStatus(text, kind) {
+        statusEl.textContent = text || '';
+        statusEl.className = 'status' + (kind ? ' ' + kind : '');
+      }
+
+      function setBusy(isBusy) {
+        subscribeBtn.disabled = isBusy;
+        cancelBtn.disabled = isBusy;
+        nameEl.disabled = isBusy;
+        emailEl.disabled = isBusy;
+        planEl.disabled = isBusy;
+        intervalEl.disabled = isBusy;
+      }
+
+      function initFromQuery() {
+        const params = new URLSearchParams(window.location.search);
+        const plan = params.get('plan');
+        const interval = params.get('interval');
+        if (plan === 'student' || plan === 'pro') planEl.value = plan;
+        if (interval === 'month' || interval === 'year') intervalEl.value = interval;
+
+        if (params.get('subscribed') === '1') {
+          setStatus('Subscription activated. You can return to the builder and download.', 'ok');
+        } else if (params.get('canceled') === '1') {
+          setStatus('Checkout canceled. You can try again any time.', 'err');
+        }
+      }
+
+      async function postJson(url, body, headers) {
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(headers || {}),
+          },
+          body: JSON.stringify(body || {}),
+        });
+        const text = await resp.text().catch(() => '');
+        if (!resp.ok) {
+          throw new Error(`HTTP ${resp.status} ${resp.statusText}: ${text.slice(0, 500)}`);
+        }
+        return text ? JSON.parse(text) : {};
+      }
+
+      cancelBtn.addEventListener('click', () => {
+        window.location.href = '/';
+      });
+
+      subscribeBtn.addEventListener('click', async () => {
+        const email = (emailEl.value || '').trim();
+        const name = (nameEl.value || '').trim();
+        const plan = planEl.value;
+        const interval = intervalEl.value;
+
+        if (!email) {
+          setStatus('Email is required.', 'err');
+          return;
+        }
+
+        try {
+          setBusy(true);
+          setStatus('Creating account…');
+
+          const auth = await postJson(`${ORCH_BASE}/auth/guest`, { email, name: name || null });
+          const token = auth && auth.access_token;
+          if (!token) throw new Error('Missing access_token');
+
+          setStatus('Starting checkout…');
+          const checkout = await postJson(
+            `${ORCH_BASE}/billing/checkout-session`,
+            { plan, interval },
+            { Authorization: `Bearer ${token}` },
+          );
+
+          if (checkout.already_subscribed) {
+            setStatus('Subscription already active. You can return to the builder.', 'ok');
+            return;
+          }
+          if (!checkout.url) throw new Error('Missing checkout URL');
+
+          window.location.href = checkout.url;
+        } catch (e) {
+          setStatus(String(e && e.message ? e.message : e), 'err');
+        } finally {
+          setBusy(false);
+        }
+      });
+
+      initFromQuery();
+    </script>
+  </body>
+</html>

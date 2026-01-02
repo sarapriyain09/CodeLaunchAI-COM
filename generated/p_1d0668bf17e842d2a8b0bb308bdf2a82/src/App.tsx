@@ -1,0 +1,29 @@
+import { Routes, Route, Navigate } from "react-router-dom";
+import Layout from "./components/Layout";
+import NotFound from "./pages/NotFound";
+
+// Pages inserted by generator:
+import Home from "./pages/Home";
+import Products from "./pages/Products";
+import ProductsId from "./pages/ProductsId";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+
+export default function App() {
+  return (
+    <Routes>
+      <Route element={<Layout />}>
+        <Route path="/" element={<Home />} />
+        
+        <Route path="/products" element={<Products />} />
+        <Route path="/products/:id" element={<ProductsId />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        {/* __ROUTES__ */}
+        <Route path="*" element={<NotFound />} />
+      </Route>
+      <Route path="/404" element={<NotFound />} />
+      <Route path="*" element={<Navigate to="/404" replace />} />
+    </Routes>
+  );
+}
