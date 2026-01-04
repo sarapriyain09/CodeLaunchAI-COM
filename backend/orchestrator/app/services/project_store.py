@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -11,7 +12,7 @@ from sqlalchemy import select
 
 from app.config import WORKSPACES_DIR
 from app.db import db_enabled, session_scope
-from app.db_models import Project as ProjectRow
+from app.db_models import Project as ProjectRow, ProjectChatMessage as ProjectChatMessageRow
 from app.schemas.projects import Project
 
 
@@ -25,6 +26,15 @@ def _utcnow() -> datetime:
 def _db_path() -> Path:
     WORKSPACES_DIR.mkdir(parents=True, exist_ok=True)
     return (WORKSPACES_DIR / "_projects.json").resolve()
+
+
+def _workspace_path(project_id: str) -> Path:
+    WORKSPACES_DIR.mkdir(parents=True, exist_ok=True)
+    candidate = (WORKSPACES_DIR / project_id).resolve()
+    base = WORKSPACES_DIR.resolve()
+    if not str(candidate).startswith(str(base)):
+        raise ValueError("Invalid project workspace path")
+    return candidate
 
 
 def _load() -> dict:
@@ -50,6 +60,15 @@ def _atomic_write(path: Path, payload: dict) -> None:
     with tmp.open("w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2, ensure_ascii=False)
     tmp.replace(path)
+
+
+def _delete_workspace(project_id: str) -> None:
+    try:
+        workspace = _workspace_path(project_id)
+    except ValueError:
+        return
+    if workspace.exists():
+        shutil.rmtree(workspace, ignore_errors=True)
 
 
 def list_projects() -> list[Project]:
@@ -178,3 +197,32 @@ def touch_project(project_id: str) -> None:
 
     if changed:
         _atomic_write(_db_path(), {"projects": projects})
+
+
+def delete_project(project_id: str) -> bool:
+    """Remove a project record and its generated workspace."""
+
+    if db_enabled():
+        with session_scope() as session:
+            project = session.get(ProjectRow, project_id)
+            if project is None:
+                return False
+            session.query(ProjectChatMessageRow).filter(ProjectChatMessageRow.project_id == project_id).delete()
+            session.delete(project)
+            session.flush()
+    else:
+        data = _load()
+        projects = data.get("projects", [])
+        filtered: list = []
+        removed = False
+        for entry in projects:
+            if isinstance(entry, dict) and entry.get("id") == project_id:
+                removed = True
+                continue
+            filtered.append(entry)
+        if not removed:
+            return False
+        _atomic_write(_db_path(), {"projects": filtered})
+
+    _delete_workspace(project_id)
+    return True

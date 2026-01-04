@@ -192,6 +192,12 @@ export async function createProject(name?: string, projectId?: string) {
   });
 }
 
+export async function deleteProject(projectId: string) {
+  return http<{ deleted: boolean }>(`/projects/${encodeURIComponent(projectId)}`, {
+    method: "DELETE",
+  });
+}
+
 export async function getProject(projectId: string) {
   return http<Project>(`/projects/${encodeURIComponent(projectId)}`);
 }

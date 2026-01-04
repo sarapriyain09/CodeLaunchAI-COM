@@ -5,6 +5,12 @@ import * as api from "../api/orchestrator";
 
 const PROJECT_NAME = "generated-app";
 
+const DEFAULT_ASSISTANT_MESSAGE: api.ChatMessage = {
+  role: "assistant",
+  content:
+    "Tell me what you want to build. I’ll ask a couple of clarifying questions, then you can click Generate.",
+};
+
 function getActiveSessionProjectId() {
   return sessionStorage.getItem("cla_active_project_id") || sessionStorage.getItem("cla_project_id");
 }
@@ -13,6 +19,11 @@ function setActiveSessionProjectId(id: string) {
   sessionStorage.setItem("cla_active_project_id", id);
   // Back-compat with older sessions.
   sessionStorage.setItem("cla_project_id", id);
+}
+
+function clearActiveSessionProjectId() {
+  sessionStorage.removeItem("cla_active_project_id");
+  sessionStorage.removeItem("cla_project_id");
 }
 
 function formatProjectTimestamp(iso?: string | null) {
@@ -29,17 +40,12 @@ export default function Workspace() {
   const [downloadStatus, setDownloadStatus] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [threadQuery, setThreadQuery] = useState("");
-  const [chatMessages, setChatMessages] = useState<api.ChatMessage[]>([
-    {
-      role: "assistant",
-      content:
-        "Tell me what you want to build. I’ll ask a couple of clarifying questions, then you can click Generate.",
-    },
-  ]);
+  const [chatMessages, setChatMessages] = useState<api.ChatMessage[]>([DEFAULT_ASSISTANT_MESSAGE]);
   const [draft, setDraft] = useState(
     "Build a modern minimal jewellery ecommerce site with home, product grid, product detail, about, and contact sections.",
   );
   const [isBusy, setIsBusy] = useState(false);
+  const [deletingProjectId, setDeletingProjectId] = useState<string | null>(null);
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [blueprintMeta, setBlueprintMeta] = useState<string | null>(null);
@@ -135,17 +141,7 @@ export default function Workspace() {
         const resp = await api.getProjectChatHistory(projectId);
         if (cancelled) return;
         const msgs = resp.messages.map((m) => ({ role: m.role, content: m.content })) as api.ChatMessage[];
-        setChatMessages(
-          msgs.length
-            ? msgs
-            : [
-                {
-                  role: "assistant",
-                  content:
-                    "Tell me what you want to build. I’ll ask a couple of clarifying questions, then you can click Generate.",
-                },
-              ],
-        );
+        setChatMessages(msgs.length ? msgs : [DEFAULT_ASSISTANT_MESSAGE]);
       } catch {
         // Non-fatal: keep local-only chat.
       }
@@ -241,14 +237,54 @@ export default function Workspace() {
     }
   }
 
-  function handleSelectProject(id: string) {
+  function handleSelectProject(id: string, options?: { openPreview?: boolean }) {
+    const shouldOpenPreview = options?.openPreview ?? true;
     setProjectId(id);
     setActiveSessionProjectId(id);
     setFiles([]);
     setBlueprintMeta(null);
     setStreamUrl(null);
-    setPreviewUrl(api.previewUrl(id));
+    const nextPreviewUrl = api.previewUrl(id);
+    setPreviewUrl(nextPreviewUrl);
     setDownloadStatus(null);
+    if (shouldOpenPreview) {
+      window.open(nextPreviewUrl, "_blank", "noopener,noreferrer");
+    }
+  }
+
+  async function handleDeleteProject(id: string) {
+    if (deletingProjectId) return;
+    const confirmed = window.confirm(
+      "Delete this project? This removes its chat history, preview, and generated files.",
+    );
+    if (!confirmed) return;
+
+    setDeletingProjectId(id);
+    try {
+      await api.deleteProject(id);
+      const remaining = projects.filter((project) => project.id !== id);
+      setProjects(remaining);
+
+      if (projectId === id) {
+        if (remaining.length > 0) {
+          handleSelectProject(remaining[0].id, { openPreview: false });
+        } else {
+          clearActiveSessionProjectId();
+          setProjectId(null);
+          setFiles([]);
+          setBlueprintMeta(null);
+          setStreamUrl(null);
+          setPreviewUrl(null);
+          setDownloadStatus(null);
+          setChatMessages([DEFAULT_ASSISTANT_MESSAGE]);
+        }
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setBlueprintMeta(`Delete failed: ${message}`);
+    } finally {
+      setDeletingProjectId(null);
+    }
   }
 
   async function handleCreateProject() {
@@ -387,14 +423,38 @@ export default function Workspace() {
               </div>
             ) : (
               filteredProjects.map((project) => (
-                <button
+                <div
                   key={project.id}
                   className={`thread ${project.id === projectId ? "active" : ""}`}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => handleSelectProject(project.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      handleSelectProject(project.id);
+                    }
+                  }}
                 >
-                  <div className="threadTitle">{project.name || "Untitled project"}</div>
-                  <div className="threadMeta">{formatProjectTimestamp(project.updated_at)}</div>
-                </button>
+                  <div className="threadHeader">
+                    <div className="threadText">
+                      <div className="threadTitle">{project.name || "Untitled project"}</div>
+                      <div className="threadMeta">{formatProjectTimestamp(project.updated_at)}</div>
+                    </div>
+                    <button
+                      type="button"
+                      className="threadDeleteBtn"
+                      aria-label="Delete project"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        void handleDeleteProject(project.id);
+                      }}
+                      disabled={deletingProjectId === project.id}
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
               ))
             )}
           </div>

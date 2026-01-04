@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
 
-from app.schemas.projects import CreateProjectRequest, ListProjectsResponse, Project
-from app.services.project_store import create_project, get_project, list_projects
+from app.schemas.projects import CreateProjectRequest, DeleteProjectResponse, ListProjectsResponse, Project
+from app.services.project_store import create_project, delete_project, get_project, list_projects
 
 
 router = APIRouter()
@@ -28,3 +28,11 @@ def projects_get(project_id: str) -> Project:
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
     return project
+
+
+@router.delete("/projects/{project_id}", response_model=DeleteProjectResponse)
+def projects_delete(project_id: str) -> DeleteProjectResponse:
+    removed = delete_project(project_id)
+    if not removed:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return DeleteProjectResponse(deleted=True)

@@ -19,3 +19,7 @@ class CreateProjectRequest(BaseModel):
 
 class ListProjectsResponse(BaseModel):
     projects: list[Project]
+
+
+class DeleteProjectResponse(BaseModel):
+    deleted: bool = Field(default=True)
