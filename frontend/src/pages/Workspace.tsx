@@ -1,17 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import TopBar from "../components/TopBar";
-import ChatPanel from "../components/ChatPanel";
-import PreviewPane from "../components/PreviewPane";
-import FileTree from "../components/FileTree";
-import CodeEditor from "../components/CodeEditor";
+import "./chat-layout.css";
 import { useProjectFiles } from "../state/useProjectFiles";
 import * as api from "../api/orchestrator";
 
 const PROJECT_NAME = "generated-app";
 
 function getActiveSessionProjectId() {
-  return sessionStorage.getItem("cla_active_project_id")
-    || sessionStorage.getItem("cla_project_id");
+  return sessionStorage.getItem("cla_active_project_id") || sessionStorage.getItem("cla_project_id");
 }
 
 function setActiveSessionProjectId(id: string) {
@@ -20,15 +15,20 @@ function setActiveSessionProjectId(id: string) {
   sessionStorage.setItem("cla_project_id", id);
 }
 
+function formatProjectTimestamp(iso?: string | null) {
+  if (!iso) return "Just now";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "Just now";
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
 export default function Workspace() {
-  const { files, setFiles, selectedFile, selectedPath, setSelectedPath } = useProjectFiles();
+  const { setFiles } = useProjectFiles();
   const [projects, setProjects] = useState<api.Project[]>([]);
   const [projectId, setProjectId] = useState<string | null>(() => getActiveSessionProjectId());
   const [downloadStatus, setDownloadStatus] = useState<string | null>(null);
-  const [leftTab, setLeftTab] = useState<"chat" | "blueprint">("chat");
-  const [rightTab, setRightTab] = useState<"preview" | "code">("preview");
-  const [projectState, setProjectState] = useState<api.ProjectState | null>(null);
-  const [projectStateError, setProjectStateError] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [threadQuery, setThreadQuery] = useState("");
   const [chatMessages, setChatMessages] = useState<api.ChatMessage[]>([
     {
       role: "assistant",
@@ -49,19 +49,6 @@ export default function Workspace() {
     // Results in: /app/#/?scroll=pricing
     window.location.hash = "/?scroll=pricing";
   }, []);
-
-  const refreshProjectState = useCallback(async () => {
-    if (!projectId) return;
-    try {
-      setProjectStateError(null);
-      const state = await api.getProjectState(projectId);
-      setProjectState(state);
-    } catch (e) {
-      const message = e instanceof Error ? e.message : String(e);
-      setProjectState(null);
-      setProjectStateError(message);
-    }
-  }, [projectId]);
 
   async function doDownloadZip(token: string) {
     if (!projectId) return;
@@ -132,8 +119,6 @@ export default function Workspace() {
     };
   }, []);
 
-  const subscribeHint = null;
-
   // Keep preview URL aligned when project changes.
   useEffect(() => {
     if (!projectId) return;
@@ -199,6 +184,20 @@ export default function Workspace() {
     return lastUser?.content ?? draft;
   }, [chatMessages, draft]);
 
+  const filteredProjects = useMemo(() => {
+    const q = threadQuery.trim().toLowerCase();
+    if (!q) return projects;
+    return projects.filter((project) => {
+      const name = project.name?.toLowerCase() ?? "";
+      return name.includes(q) || project.id.toLowerCase().includes(q);
+    });
+  }, [projects, threadQuery]);
+
+  const activeProject = useMemo(
+    () => (projectId ? projects.find((project) => project.id === projectId) ?? null : null),
+    [projects, projectId],
+  );
+
   async function handleGenerate() {
     if (!goal.trim()) return;
     if (!projectId) return;
@@ -218,9 +217,6 @@ export default function Workspace() {
           meta: (planResponse as any)?.meta ?? null,
         },
       });
-      if (leftTab === "blueprint") {
-        await refreshProjectState();
-      }
 
       const filesResponse = await api.generateFiles(planResponse.blueprint, PROJECT_NAME);
       setFiles(filesResponse.files);
@@ -240,6 +236,69 @@ export default function Workspace() {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       setBlueprintMeta(`Error: ${message}`);
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  function handleSelectProject(id: string) {
+    setProjectId(id);
+    setActiveSessionProjectId(id);
+    setFiles([]);
+    setBlueprintMeta(null);
+    setStreamUrl(null);
+    setPreviewUrl(api.previewUrl(id));
+    setDownloadStatus(null);
+  }
+
+  async function handleCreateProject() {
+    if (isBusy) return;
+    setIsBusy(true);
+    try {
+      const created = await api.createProject();
+      setProjects((prev) => [created, ...prev]);
+      setProjectId(created.id);
+      setActiveSessionProjectId(created.id);
+      setFiles([]);
+      setBlueprintMeta(null);
+      setStreamUrl(null);
+      setPreviewUrl(api.previewUrl(created.id));
+      setDownloadStatus(null);
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function handleDownloadClick() {
+    if (!projectId) return;
+    setDownloadStatus(null);
+    const token = api.getAccessToken();
+    if (!token) {
+      setDownloadStatus("Registration required to download. Redirecting to Pricing…");
+      redirectToPricing();
+      return;
+    }
+    await doDownloadZip(token);
+  }
+
+  function handlePreviewClick() {
+    if (!previewUrl) return;
+    window.open(previewUrl, "_blank", "noopener,noreferrer");
+  }
+
+  async function handleSend() {
+    const text = draft.trim();
+    if (!text || !projectId) return;
+    setIsBusy(true);
+    setBlueprintMeta(null);
+    setChatMessages((prev) => [...prev, { role: "user", content: text }]);
+    setDraft("");
+    try {
+      const resp = await api.projectChat(projectId, text);
+      setChatMessages((prev) => [...prev, { role: "assistant", content: resp.reply }]);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setChatMessages((prev) => [...prev, { role: "assistant", content: `Error: ${message}` }]);
     } finally {
       setIsBusy(false);
     }
@@ -285,214 +344,133 @@ export default function Workspace() {
     return () => source.close();
   }, [streamUrl, handleBuildDone]);
 
+  const subtitleText = blueprintMeta ?? (isBusy ? "Builder is thinking…" : "Describe what you want to build.");
+  const hintText = downloadStatus ?? "Shift+Enter for a new line. Generate to refresh the preview.";
+  const disableSend = !draft.trim() || !projectId || isBusy;
+  const disableGenerate = !projectId || !goal.trim() || isBusy;
+  const disableDownload = !projectId || isBusy;
+  const disablePreview = !previewUrl;
+
   return (
-    <div className="h-screen flex flex-col bg-transparent text-[color:var(--text-primary)]">
-      <TopBar
-        onGenerate={handleGenerate}
-        isBusy={isBusy}
-        isGenerateDisabled={!projectId}
-        subscribeHint={subscribeHint}
-        onDownload={async () => {
-          if (!projectId) return;
-          setDownloadStatus(null);
-          const token = api.getAccessToken();
-          if (!token) {
-            setDownloadStatus("Registration required to download. Redirecting to Pricing…");
-            redirectToPricing();
-            return;
-          }
-          await doDownloadZip(token);
-        }}
-        isDownloadDisabled={!projectId}
-        projects={projects}
-        activeProjectId={projectId}
-        onSelectProject={(id) => {
-          setProjectId(id);
-          setActiveSessionProjectId(id);
-          setFiles([]);
-          setBlueprintMeta(null);
-          setStreamUrl(null);
-          setPreviewUrl(api.previewUrl(id));
-          setDownloadStatus(null);
-          setProjectState(null);
-          setProjectStateError(null);
-        }}
-        onCreateProject={async () => {
-          if (isBusy) return;
-          setIsBusy(true);
-          try {
-            const created = await api.createProject();
-            setProjects((prev) => [created, ...prev]);
-            setProjectId(created.id);
-            setActiveSessionProjectId(created.id);
-            setFiles([]);
-            setBlueprintMeta(null);
-            setStreamUrl(null);
-            setPreviewUrl(api.previewUrl(created.id));
-            setDownloadStatus(null);
-          } finally {
-            setIsBusy(false);
-          }
-        }}
-      />
-
-      <div className="flex flex-1 overflow-hidden">
-        <div className="w-[300px] shrink-0 border-r border-[color:var(--border)] bg-[color:var(--panel)]">
-          <div className="h-full flex flex-col">
-            <div className="border-b border-[color:var(--border)] px-2 py-2 flex gap-2">
-              <button
-                className={[
-                  "px-3 py-1.5 rounded-full text-xs font-semibold border",
-                  leftTab === "chat"
-                    ? "bg-[color:var(--bg-muted)] border-[color:var(--border)]"
-                    : "bg-transparent border-[color:var(--border)] opacity-80",
-                ].join(" ")}
-                onClick={() => setLeftTab("chat")}
-              >
-                Chat
-              </button>
-              <button
-                className={[
-                  "px-3 py-1.5 rounded-full text-xs font-semibold border",
-                  leftTab === "blueprint"
-                    ? "bg-[color:var(--bg-muted)] border-[color:var(--border)]"
-                    : "bg-transparent border-[color:var(--border)] opacity-80",
-                ].join(" ")}
-                onClick={async () => {
-                  setLeftTab("blueprint");
-                  await refreshProjectState();
-                }}
-              >
-                Blueprint
-              </button>
+    <div className="chatLayoutScreen">
+      <div className="appShell">
+        <aside className={`sidebar ${sidebarOpen ? "" : "collapsed"}`}>
+          <div className="sidebarTop">
+            <button className="iconBtn" onClick={() => setSidebarOpen((prev) => !prev)} aria-label="Toggle sidebar">
+              ☰
+            </button>
+            <div className="brand">
+              <div className="logo" aria-hidden="true" />
+              <span>CodeLaunch Builder</span>
             </div>
+          </div>
 
-            {leftTab === "chat" ? (
-              <ChatPanel
-                messages={chatMessages}
-                draft={draft}
-                onDraftChange={setDraft}
-                isBusy={isBusy}
-                onSend={async () => {
-                  const text = draft.trim();
-                  if (!text) return;
-                  if (!projectId) return;
-                  setIsBusy(true);
-                  setBlueprintMeta(null);
-                  setChatMessages((prev) => [...prev, { role: "user", content: text }]);
-                  setDraft("");
-                  try {
-                    const resp = await api.projectChat(projectId, text);
-                    setChatMessages((prev) => [...prev, { role: "assistant", content: resp.reply }]);
-                  } catch (error) {
-                    const message = error instanceof Error ? error.message : String(error);
-                    setChatMessages((prev) => [
-                      ...prev,
-                      { role: "assistant", content: `Error: ${message}` },
-                    ]);
-                  } finally {
-                    setIsBusy(false);
-                  }
-                }}
+          <div className="sidebarActions">
+            <button className="primaryBtn" onClick={() => void handleCreateProject()} disabled={isBusy}>
+              + New chat
+            </button>
+            <div className="searchWrap">
+              <input
+                className="search"
+                placeholder="Search workspaces..."
+                value={threadQuery}
+                onChange={(event) => setThreadQuery(event.target.value)}
               />
-            ) : (
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                <div className="text-xs text-[color:var(--text-muted)]/80">
-                  Stored blueprint/plan JSON for this project.
-                </div>
-                {projectStateError ? (
-                  <div className="text-sm text-red-400">{projectStateError}</div>
-                ) : null}
-                <div>
-                  <div className="text-xs uppercase tracking-wide text-[color:var(--text-muted)]/70 mb-2">
-                    Blueprint
-                  </div>
-                  <pre className="text-xs whitespace-pre-wrap break-words bg-[color:var(--bg-muted)] border border-[color:var(--border)] rounded-xl p-3">
-                    {JSON.stringify(projectState?.blueprint ?? {}, null, 2)}
-                  </pre>
-                </div>
-                <div>
-                  <div className="text-xs uppercase tracking-wide text-[color:var(--text-muted)]/70 mb-2">
-                    Plan
-                  </div>
-                  <pre className="text-xs whitespace-pre-wrap break-words bg-[color:var(--bg-muted)] border border-[color:var(--border)] rounded-xl p-3">
-                    {JSON.stringify(projectState?.plan ?? {}, null, 2)}
-                  </pre>
-                </div>
+            </div>
+          </div>
+
+          <div className="threadList">
+            {filteredProjects.length === 0 ? (
+              <div className="thread">
+                <div className="threadTitle">No matches</div>
+                <div className="threadMeta">Adjust your search.</div>
               </div>
+            ) : (
+              filteredProjects.map((project) => (
+                <button
+                  key={project.id}
+                  className={`thread ${project.id === projectId ? "active" : ""}`}
+                  onClick={() => handleSelectProject(project.id)}
+                >
+                  <div className="threadTitle">{project.name || "Untitled project"}</div>
+                  <div className="threadMeta">{formatProjectTimestamp(project.updated_at)}</div>
+                </button>
+              ))
             )}
           </div>
-        </div>
 
-        <div className="flex-1 bg-[color:var(--panel)]">
-          <div className="h-full flex flex-col">
-            <div className="border-b border-[color:var(--border)] px-2 py-2 flex gap-2 items-center justify-between">
-              <div className="flex gap-2">
-                <button
-                  className={[
-                    "px-3 py-1.5 rounded-full text-xs font-semibold border",
-                    rightTab === "preview"
-                      ? "bg-[color:var(--bg-muted)] border-[color:var(--border)]"
-                      : "bg-transparent border-[color:var(--border)] opacity-80",
-                  ].join(" ")}
-                  onClick={() => setRightTab("preview")}
-                >
-                  Preview
-                </button>
-                <button
-                  className={[
-                    "px-3 py-1.5 rounded-full text-xs font-semibold border",
-                    rightTab === "code"
-                      ? "bg-[color:var(--bg-muted)] border-[color:var(--border)]"
-                      : "bg-transparent border-[color:var(--border)] opacity-80",
-                  ].join(" ")}
-                  onClick={() => setRightTab("code")}
-                >
-                  Code
-                </button>
+          <div className="sidebarFooter">
+            <div className="userChip">
+              <div className="avatar" aria-hidden="true">
+                {(activeProject?.name ?? "CL").slice(0, 1).toUpperCase()}
               </div>
-
-              {rightTab === "code" ? (
-                <div className="text-xs text-[color:var(--text-muted)]/70">
-                  {files.length ? `${files.length} files` : "No files yet — click Generate"}
-                </div>
-              ) : null}
-            </div>
-
-            <div className="flex-1 min-h-0">
-              {rightTab === "preview" ? (
-                <PreviewPane url={previewUrl} />
-              ) : (
-                <div className="h-full flex">
-                  <div className="w-[320px] shrink-0 border-r border-[color:var(--border)] overflow-y-auto">
-                    <FileTree
-                      files={files}
-                      selectedPath={selectedPath}
-                      onSelect={(path) => setSelectedPath(path)}
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    {selectedFile ? (
-                      <CodeEditor path={selectedFile.path} value={selectedFile.content} readOnly />
-                    ) : (
-                      <div className="h-full flex items-center justify-center text-sm text-[color:var(--text-muted)]">
-                        Select a file to view its contents.
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
+              <div className="userText">
+                <div className="userName">{activeProject?.name || "Workspace"}</div>
+                <div className="userMeta">{activeProject ? "Live project" : "Creating project"}</div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </aside>
 
-      {blueprintMeta || downloadStatus ? (
-        <div className="border-t border-[color:var(--border)] bg-[color:var(--panel)] text-xs text-[color:var(--text-muted)] px-4 py-2">
-          {downloadStatus ? <span className="mr-3">{downloadStatus}</span> : null}
-          {blueprintMeta ? <span>{blueprintMeta}</span> : null}
-        </div>
-      ) : null}
+        <main className="main">
+          <header className="topbar">
+            <button className="iconBtn mobileOnly" onClick={() => setSidebarOpen(true)} aria-label="Open sidebar">
+              ☰
+            </button>
+            <div className="topbarTitle">
+              <div className="title">{activeProject?.name || "Untitled project"}</div>
+              <div className="subtitle">{subtitleText}</div>
+            </div>
+            <div className="topbarRight">
+              <button className="ghostBtn" onClick={handlePreviewClick} disabled={disablePreview}>
+                Open preview
+              </button>
+              <button className="ghostBtn" onClick={() => void handleDownloadClick()} disabled={disableDownload}>
+                Download
+              </button>
+              <button className="ghostBtn" onClick={() => void handleGenerate()} disabled={disableGenerate}>
+                {isBusy ? "Working…" : "Generate"}
+              </button>
+            </div>
+          </header>
+
+          <section className="chatArea">
+            <div className="messages">
+              {chatMessages.map((message, index) => (
+                <div key={`${message.role}-${index}`} className={`row ${message.role === "user" ? "me" : "bot"}`}>
+                  <div className="bubble">
+                    <div className="role">{message.role === "user" ? "You" : "Assistant"}</div>
+                    <div className="text">{message.content}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <footer className="composerWrap">
+            <div className="composer">
+              <textarea
+                className="input"
+                placeholder="Message... (Enter to send, Shift+Enter for new line)"
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
+                    void handleSend();
+                  }
+                }}
+                rows={1}
+                disabled={!projectId}
+              />
+              <button className="sendBtn" onClick={() => void handleSend()} disabled={disableSend}>
+                Send
+              </button>
+            </div>
+            <div className="hint">{hintText}</div>
+          </footer>
+        </main>
+      </div>
     </div>
   );
 }
