@@ -1,6 +1,6 @@
 /* Minimal PWA service worker for /app/ */
 
-const CACHE_NAME = 'cla-app-v3';
+const CACHE_NAME = 'cla-app-v4';
 
 // Keep this list intentionally small; Vite emits hashed assets.
 const PRECACHE_URLS = [

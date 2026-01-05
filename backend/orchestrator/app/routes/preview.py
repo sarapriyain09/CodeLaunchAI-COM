@@ -6,10 +6,10 @@ import time
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
-from app.config import WORKSPACES_DIR
+from app.config import PUBLIC_APP_ORIGIN, WORKSPACES_DIR
 from app.schemas.blueprint import Blueprint
 from app.schemas.files import FileItem
 from app.services.generator import generate_vite_react_project
@@ -65,6 +65,15 @@ def _preview_index_html(project_id: str, mount: str) -> HTMLResponse:
     html = index.read_text(encoding='utf-8')
     html = _rewrite_index_asset_paths(html, f"/{mount}/{project_id}/")
     return HTMLResponse(html)
+
+
+def _maybe_redirect_to_public_origin(request: Request, project_id: str) -> RedirectResponse | None:
+    if not PUBLIC_APP_ORIGIN:
+        return None
+    host = (request.url.hostname or '').lower()
+    if host.endswith('onrender.com'):
+        return RedirectResponse(f"{PUBLIC_APP_ORIGIN}/previews/{project_id}", status_code=302)
+    return None
 
 
 def _preview_asset_response(project_id: str, asset_path: str, mount: str):
@@ -202,44 +211,59 @@ async def build_project(project_id: str) -> BuildResponse:
         project_id=project_id,
         installed=install_out,
         built=build_out,
-        preview_url=f'/preview/{project_id}/',
+        preview_url=f'/previews/{project_id}',
     )
 
 
 @router.get('/preview/{project_id}/', response_class=HTMLResponse)
-async def preview_index(project_id: str) -> HTMLResponse:
+async def preview_index(project_id: str, request: Request) -> HTMLResponse:
+    redirect = _maybe_redirect_to_public_origin(request, project_id)
+    if redirect:
+        return redirect
     return _preview_index_html(project_id, mount='preview')
 
 
 @router.get('/p/{project_id}/', response_class=HTMLResponse)
-async def public_preview_index(project_id: str) -> HTMLResponse:
+async def public_preview_index(project_id: str, request: Request) -> HTMLResponse:
     """Public-domain-friendly alias for preview.
 
     Some hosts (notably Vercel) may treat /preview/* specially. We provide /p/* as a stable
     alias so the frontend can open previews under the main domain without warnings.
     """
 
+    redirect = _maybe_redirect_to_public_origin(request, project_id)
+    if redirect:
+        return redirect
     return _preview_index_html(project_id, mount='p')
 
 
 @router.get('/p/{project_id}', response_class=HTMLResponse, include_in_schema=False)
-async def public_preview_index_noslash(project_id: str) -> HTMLResponse:
+async def public_preview_index_noslash(project_id: str, request: Request) -> HTMLResponse:
+    redirect = _maybe_redirect_to_public_origin(request, project_id)
+    if redirect:
+        return redirect
     return _preview_index_html(project_id, mount='p')
 
 
 @router.get('/previews/{project_id}/', response_class=HTMLResponse)
-async def public_previews_index(project_id: str) -> HTMLResponse:
+async def public_previews_index(project_id: str, request: Request) -> HTMLResponse:
     """Second public-domain-friendly alias for preview.
 
     Some hosts may treat short paths like /p/* or /preview/* specially. Provide a
     longer, explicit path that is unlikely to collide with platform routing.
     """
 
+    redirect = _maybe_redirect_to_public_origin(request, project_id)
+    if redirect:
+        return redirect
     return _preview_index_html(project_id, mount='previews')
 
 
 @router.get('/previews/{project_id}', response_class=HTMLResponse, include_in_schema=False)
-async def public_previews_index_noslash(project_id: str) -> HTMLResponse:
+async def public_previews_index_noslash(project_id: str, request: Request) -> HTMLResponse:
+    redirect = _maybe_redirect_to_public_origin(request, project_id)
+    if redirect:
+        return redirect
     return _preview_index_html(project_id, mount='previews')
 
 
@@ -329,7 +353,7 @@ async def build_stream(project_id: str, install: bool = True):
             if not dist.exists():
                 raise RuntimeError('Build finished but dist/ not found.')
 
-            yield sse_event('done', f'/preview/{project_id}/')
+            yield sse_event('done', f'/previews/{project_id}')
         except Exception as error:  # pragma: no cover - surfaced to client
             yield sse_event('error', str(error)[:1000])
 

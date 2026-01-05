@@ -639,11 +639,11 @@ export default function Workspace() {
     }
   }
 
-  const handleBuildDone = useCallback((pathOrUrl?: string) => {
+  const handleBuildDone = useCallback((_pathOrUrl?: string) => {
     if (!projectId) return;
-    const candidate = pathOrUrl && pathOrUrl.startsWith("http")
-      ? pathOrUrl
-      : api.previewUrl(projectId);
+    // Never trust/propagate backend-hosted absolute URLs (e.g. Render). Preview must open
+    // under the current app origin (Vercel) to avoid browser phishing warnings.
+    const candidate = api.previewUrl(projectId);
     const next = `${candidate}${candidate.includes("?") ? "&" : "?"}t=${Date.now()}`;
     setPreviewUrl(next);
     setHasPreview(true);
