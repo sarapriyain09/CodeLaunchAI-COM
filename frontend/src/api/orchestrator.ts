@@ -246,7 +246,10 @@ export function buildStreamUrl(projectId: string, install = true) {
 }
 
 export function previewUrl(projectId: string) {
-  return `${ORCH_BASE}/preview/${encodeURIComponent(projectId)}/`;
+  const origin = (typeof window !== "undefined" && window.location?.origin)
+    ? window.location.origin
+    : ORCH_BASE;
+  return `${origin}/preview/${encodeURIComponent(projectId)}/`;
 }
 
 export async function exportZip(projectId: string, token?: string | null): Promise<Blob> {

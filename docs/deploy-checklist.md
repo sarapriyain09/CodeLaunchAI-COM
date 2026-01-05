@@ -39,6 +39,11 @@ Stripe (only if billing is enabled):
 - Confirm the public domain points to the host.
 - Confirm HTTPS is on (recommended) and HTTP redirects to HTTPS.
 
+If frontend (Vercel) and backend (Render) are split:
+- Proxy preview routes through the public domain to avoid browser warnings about the Render hostname.
+- Add a Vercel rewrite for `/preview/*` (and `/assets/*` for older builds) to point to the backend.
+- This repo includes `vercel.json` with these rewrites (update the destination host if your Render URL changes).
+
 ## 4) Minimal monitoring
 
 - Add an uptime check against `GET /health`.
