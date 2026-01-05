@@ -151,7 +151,9 @@ async def preview_assets(project_id: str, asset_path: str):
     if not target.exists():
         index = dist / 'index.html'
         if index.exists():
-            return HTMLResponse(index.read_text(encoding='utf-8'))
+            html = index.read_text(encoding='utf-8')
+            html = _rewrite_index_asset_paths(html, project_id)
+            return HTMLResponse(html)
         raise HTTPException(status_code=404, detail='File not found.')
     return FileResponse(str(target))
 

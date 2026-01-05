@@ -12,6 +12,48 @@ class BuildError(RuntimeError):
     pass
 
 
+def ensure_preview_router_basename(workspace: Path) -> None:
+    main_tsx = workspace / 'src' / 'main.tsx'
+    if not main_tsx.exists():
+        return
+
+    try:
+        text = main_tsx.read_text(encoding='utf-8')
+    except Exception:
+        return
+
+    # Only patch the common template shape: BrowserRouter without basename.
+    if 'BrowserRouter' not in text:
+        return
+    if 'basename=' in text or 'getRouterBasename' in text:
+        return
+    if '<BrowserRouter>' not in text:
+        return
+
+    helper = (
+        "\nfunction getRouterBasename(): string {\n"
+        "  const path = window.location.pathname || \"/\";\n"
+        "  const match = path.match(/^\\/preview\\/[^/]+/);\n"
+        "  return match ? match[0] : \"/\";\n"
+        "}\n"
+    )
+
+    if helper.strip() not in text:
+        # Insert helper after the styles import if present, else after imports.
+        marker = 'import "./styles.css";'
+        if marker in text:
+            text = text.replace(marker, marker + helper, 1)
+        else:
+            text = helper + text
+
+    text = text.replace('<BrowserRouter>', '<BrowserRouter basename={getRouterBasename()}>', 1)
+
+    try:
+        main_tsx.write_text(text, encoding='utf-8')
+    except Exception:
+        return
+
+
 def _run_command(cmd: list[str], cwd: Path) -> str:
     try:
         process = subprocess.run(cmd, cwd=str(cwd), capture_output=True, text=True, shell=False)
@@ -36,6 +78,7 @@ def npm_install_if_needed(workspace: Path) -> str:
 
 
 def npm_build(workspace: Path) -> str:
+    ensure_preview_router_basename(workspace)
     return _run_command([NPM_CMD, 'run', 'build'], workspace)
 
 
