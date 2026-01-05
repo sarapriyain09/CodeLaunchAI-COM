@@ -140,6 +140,12 @@ def _apply_changed_files(workspace: Path, changed: List[str], files: Dict[str, s
     return len(items)
 
 
+def _workspace_has_base_app(workspace: Path) -> bool:
+    """Return True if the workspace looks like a materialized Vite app."""
+
+    return (workspace / 'package.json').exists()
+
+
 @router.post('/projects/{project_id}/patch', response_model=PatchResponse)
 async def patch_project(project_id: str, body: PatchRequest) -> PatchResponse:
     if get_project(project_id) is None:
@@ -204,8 +210,16 @@ async def patch_project(project_id: str, body: PatchRequest) -> PatchResponse:
         put_project_files_payload(project_id, _sanitize_files_for_db(files))
 
         # Apply only changed files into the existing workspace, and delete removed ones.
+        # If the workspace isn't materialized yet (common after a deploy/restart in ephemeral
+        # environments), write the full file tree so the project can build.
         workspace = _workspace(project_id)
-        applied = _apply_changed_files(workspace, diff.changed, files)
+        if not _workspace_has_base_app(workspace):
+            items = [FileItem(path=path, content=content) for path, content in files.items()]
+            write_file_tree(workspace, items)
+            ensure_gitignore(workspace)
+            applied = len(items)
+        else:
+            applied = _apply_changed_files(workspace, diff.changed, files)
         _delete_paths(workspace, diff.removed)
 
         if generated_seeds:

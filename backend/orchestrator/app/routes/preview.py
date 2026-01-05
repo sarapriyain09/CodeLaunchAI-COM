@@ -21,6 +21,7 @@ from app.services.stream_runner import (
     stream_npm_install,
 )
 from app.services.image_client import maybe_generate_images_and_rewrite_files
+from app.services.project_files_store import get_project_files_payload
 from app.services.project_store import touch_project
 
 router = APIRouter()
@@ -66,6 +67,37 @@ def _dist_dir(project_id: str) -> Path:
     return _workspace(project_id) / 'dist'
 
 
+def _ensure_materialized_workspace(project_id: str, workspace: Path) -> None:
+    """Ensure the on-disk workspace contains a buildable Vite app.
+
+    Some flows persist project files/state into the store (which creates the project
+    directory) without writing the full file tree to disk. In that case, the workspace
+    folder exists but critical files like package.json are missing, causing npm to fail
+    with ENOENT.
+    """
+
+    package_json = workspace / 'package.json'
+    if package_json.exists():
+        return
+
+    payload = get_project_files_payload(project_id)
+    if payload is None:
+        raise HTTPException(status_code=404, detail='Workspace not materialized yet; generate/materialize first.')
+
+    _updated_at, raw_files = payload
+    if not raw_files:
+        raise HTTPException(status_code=404, detail='Workspace not materialized yet; generate/materialize first.')
+
+    file_items = [FileItem(path=f.get('path', ''), content=f.get('content', '')) for f in raw_files]
+    # Only write entries that look like valid file items.
+    file_items = [fi for fi in file_items if fi.path and isinstance(fi.path, str) and isinstance(fi.content, str)]
+    if not file_items:
+        raise HTTPException(status_code=404, detail='Workspace not materialized yet; generate/materialize first.')
+
+    write_file_tree(workspace, file_items)
+    ensure_gitignore(workspace)
+
+
 def sse_event(event: str, data: str) -> str:
     lines = data.splitlines() or ['']
     payload = f'event: {event}\n'
@@ -108,7 +140,9 @@ async def materialize_project(project_id: str, body: MaterializeRequest) -> Mate
 async def build_project(project_id: str) -> BuildResponse:
     workspace = _workspace(project_id)
     if not workspace.exists():
-        raise HTTPException(status_code=404, detail='Workspace not found; call /materialize first.')
+        raise HTTPException(status_code=404, detail='Workspace not found; generate/materialize first.')
+
+    _ensure_materialized_workspace(project_id, workspace)
 
     touch_project(project_id)
 
@@ -185,7 +219,7 @@ async def preview_assets_root(asset_path: str, request: Request):
 async def build_stream(project_id: str, install: bool = True):
     workspace = _workspace(project_id)
     if not workspace.exists():
-        raise HTTPException(status_code=404, detail='Workspace not found. Call materialize first.')
+        raise HTTPException(status_code=404, detail='Workspace not found. Generate/materialize first.')
 
     def generator():
         yield sse_event('status', 'Build started')
@@ -202,6 +236,7 @@ async def build_stream(project_id: str, install: bool = True):
             return None
 
         try:
+            _ensure_materialized_workspace(project_id, workspace)
             clean_dist(workspace)
             yield sse_event('log', 'Cleaned dist/')
             ping = maybe_ping()
