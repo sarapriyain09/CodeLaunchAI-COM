@@ -376,9 +376,13 @@ export default function Workspace() {
   }, [projectId, setFiles]);
 
   const goal = useMemo(() => {
-    // Use the latest user message as the goal for planning.
+    // Prefer the current composer text (so edits aren't lost).
+    // Fall back to the latest user message when the composer is empty.
+    const typed = draft.trim();
+    if (typed) return typed;
+
     const lastUser = [...chatMessages].reverse().find((m) => m.role === "user");
-    return lastUser?.content ?? draft;
+    return lastUser?.content ?? "";
   }, [chatMessages, draft]);
 
   const filteredProjects = useMemo(() => {
