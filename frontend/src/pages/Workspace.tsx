@@ -549,7 +549,11 @@ export default function Workspace() {
       setBlueprintMeta("No preview yet. Click Generate to build it.");
       return;
     }
-    window.open(previewUrl, "_blank", "noopener,noreferrer");
+    // Safety: never open backend-hosted (Render) preview URLs.
+    const safe = (previewUrl.includes(".onrender.com/") && projectId)
+      ? api.previewUrl(projectId)
+      : previewUrl;
+    window.open(safe, "_blank", "noopener,noreferrer");
   }
 
   async function handleSend() {
