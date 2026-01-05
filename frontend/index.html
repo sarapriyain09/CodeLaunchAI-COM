@@ -16,7 +16,22 @@
       <script>
         // Expose Vite env to static redirect pages under /app/.
         // This avoids ever doing billing on the Vite server.
-        window.__PUBLIC_SITE_URL__ = "%VITE_PUBLIC_SITE_URL%";
+        (function () {
+          const raw = "%VITE_PUBLIC_SITE_URL%";
+          let base = (raw || "").trim();
+          if (!base || base === "%VITE_PUBLIC_SITE_URL%") base = window.location.origin;
+
+          // Prevent cross-origin public-site links if the build-time env is stale.
+          try {
+            const parsed = new URL(base, window.location.origin);
+            if (parsed.origin !== window.location.origin) base = window.location.origin;
+          } catch {
+            base = window.location.origin;
+          }
+
+          // @ts-ignore
+          window.__PUBLIC_SITE_URL__ = base;
+        })();
       </script>
   </head>
   <body>

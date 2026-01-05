@@ -79,9 +79,45 @@ function normalizeBaseUrl(raw: string): string {
   return trimmed.replace("://localhost", "://127.0.0.1");
 }
 
-const ORCH_BASE =
-  normalizeBaseUrl(String(import.meta.env.VITE_ORCH_BASE_URL ?? "")) ||
-  (typeof window !== "undefined" ? window.location.origin : "http://127.0.0.1:7080");
+function defaultOrchBase(): string {
+  if (typeof window === "undefined") return "http://127.0.0.1:7080";
+
+  const origin = window.location.origin;
+  const isLocal = origin.includes("127.0.0.1") || origin.includes("localhost");
+
+  // Local dev runs the backend on the same origin (uvicorn 7080) with no /api prefix.
+  if (isLocal) return origin;
+
+  // Production should avoid CORS by proxying backend through Vercel rewrites.
+  return `${origin}/api`;
+}
+
+function chooseOrchBase(): string {
+  const envBase = normalizeBaseUrl(String(import.meta.env.VITE_ORCH_BASE_URL ?? ""));
+  const fallback = defaultOrchBase();
+  if (!envBase) return fallback;
+
+  if (typeof window === "undefined") return envBase;
+
+  const origin = window.location.origin;
+  const isLocal = origin.includes("127.0.0.1") || origin.includes("localhost");
+
+  // If we're not local and the env base points to a different origin, prefer the same-origin proxy.
+  // This avoids CORS breakages when the frontend domain changes.
+  if (!isLocal) {
+    try {
+      const parsed = new URL(envBase);
+      if (parsed.origin !== origin) return fallback;
+    } catch {
+      // Non-absolute env values fall back to the safe default.
+      return fallback;
+    }
+  }
+
+  return envBase;
+}
+
+const ORCH_BASE = chooseOrchBase();
 
 async function http<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${ORCH_BASE}${path}`, {

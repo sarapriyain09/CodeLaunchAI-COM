@@ -16,9 +16,24 @@
       <script>
         // Expose Vite env to static redirect pages under /app/.
         // This avoids ever doing billing on the Vite server.
-        window.__PUBLIC_SITE_URL__ = "https://www.codelaunchai.com";
+        (function () {
+          const raw = "http://127.0.0.1:7080";
+          let base = (raw || "").trim();
+          if (!base || base === "http://127.0.0.1:7080") base = window.location.origin;
+
+          // Prevent cross-origin public-site links if the build-time env is stale.
+          try {
+            const parsed = new URL(base, window.location.origin);
+            if (parsed.origin !== window.location.origin) base = window.location.origin;
+          } catch {
+            base = window.location.origin;
+          }
+
+          // @ts-ignore
+          window.__PUBLIC_SITE_URL__ = base;
+        })();
       </script>
-    <script type="module" crossorigin src="/app/assets/index-DrGZ-4bN.js"></script>
+    <script type="module" crossorigin src="/app/assets/index-DqMI5nq-.js"></script>
     <link rel="stylesheet" crossorigin href="/app/assets/index-h74ecY_h.css">
   </head>
   <body>

@@ -41,8 +41,28 @@
       "destination": "https://codelaunchai-com-1.onrender.com/health"
     },
     {
+      "source": "/api",
+      "destination": "https://codelaunchai-com-1.onrender.com/"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "https://codelaunchai-com-1.onrender.com/:path*"
+    },
+    {
       "source": "/app",
       "destination": "/app/"
+    },
+    {
+      "source": "/app/assets/:path*",
+      "destination": "/app/assets/:path*"
+    },
+    {
+      "source": "/app/sw.js",
+      "destination": "/app/sw.js"
+    },
+    {
+      "source": "/app/manifest.webmanifest",
+      "destination": "/app/manifest.webmanifest"
     },
     {
       "source": "/app/:path*",

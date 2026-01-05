@@ -6,7 +6,10 @@ export default function Landing() {
   const location = useLocation()
 
   const publicHref = (path: string) => {
-    const rawBase = (import.meta as any).env?.VITE_PUBLIC_SITE_URL as string | undefined;
+    const runtimeBase = (typeof window !== 'undefined' ? (window as any).__PUBLIC_SITE_URL__ : undefined) as
+      | string
+      | undefined;
+    const rawBase = runtimeBase ?? ((import.meta as any).env?.VITE_PUBLIC_SITE_URL as string | undefined);
     const base = (rawBase || "").replace(/\/+$/, "");
     return base ? `${base}${path}` : path;
   };

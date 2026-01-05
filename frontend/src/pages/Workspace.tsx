@@ -771,7 +771,7 @@ export default function Workspace() {
             </button>
             <div className="brand">
               <div className="logo" aria-hidden="true" />
-              <span>CodeLaunch Builder</span>
+              <span>Codlearn Builder</span>
             </div>
           </div>
 
