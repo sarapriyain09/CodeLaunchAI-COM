@@ -3,85 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CodeLaunchAI · Subscribe</title>
-    <!doctype html>
-    <html lang="en">
-      <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Redirecting…</title>
-        <meta http-equiv="refresh" content="0; url=/subscribe.html" />
-        <script>
-          // Keep this file only as a safety redirect.
-          // If someone hits /app/subscribe.html (Vite base), send them to the public page at /subscribe.html.
-          // If VITE_PUBLIC_SITE_URL is configured in the Vite app, it will already use the correct host.
-          // But this file might still be opened directly, so we also try to jump to the public host.
-          const publicBase = (window.__PUBLIC_SITE_URL__ || '').toString().replace(/\/+$/, '');
-          const targetPath = '/subscribe.html' + (window.location.search || '');
-          const target = publicBase ? (publicBase + targetPath) : targetPath;
-          window.location.replace(target);
-        </script>
-        padding: 18px;
-      <body>
-        <p>
-          Redirecting to the public subscribe page…
-          <a href="/subscribe.html">Continue</a>
-        </p>
-      </body>
-          body: JSON.stringify(body || {}),
-        });
-        const text = await resp.text().catch(() => '');
-        if (!resp.ok) {
-          throw new Error(`HTTP ${resp.status} ${resp.statusText}: ${text.slice(0, 500)}`);
-        }
-        return text ? JSON.parse(text) : {};
-      }
-
-      cancelBtn.addEventListener('click', () => {
-        window.location.href = '/app/#/';
-      });
-
-      subscribeBtn.addEventListener('click', async () => {
-        const email = (emailEl.value || '').trim();
-        const name = (nameEl.value || '').trim();
-        const plan = planEl.value;
-        const interval = intervalEl.value;
-
-        if (!email) {
-          setStatus('Email is required.', 'err');
-          return;
-        }
-
-        try {
-          setBusy(true);
-          setStatus('Creating account…');
-
-          const auth = await postJson(`${ORCH_BASE}/auth/guest`, { email, name: name || null });
-          const token = auth && auth.access_token;
-          if (!token) throw new Error('Missing access_token');
-
-          setStatus('Starting checkout…');
-          const checkout = await postJson(
-            `${ORCH_BASE}/billing/checkout-session`,
-            { plan, interval },
-            { Authorization: `Bearer ${token}` },
-          );
-
-          if (checkout.already_subscribed) {
-            setStatus('Subscription already active. You can return to the builder.', 'ok');
-            return;
-          }
-          if (!checkout.url) throw new Error('Missing checkout URL');
-
-          window.location.href = checkout.url;
-        } catch (e) {
-          setStatus(String(e && e.message ? e.message : e), 'err');
-        } finally {
-          setBusy(false);
-        }
-      });
-
-      initFromQuery();
+    <title>Redirecting…</title>
+    <meta http-equiv="refresh" content="0; url=/subscribe.html" />
+    <script>
+      // Safety redirect: if someone hits /app/subscribe.html (Vite base), send them to the public page at /subscribe.html.
+      const target = '/subscribe.html' + (window.location.search || '');
+      window.location.replace(target);
     </script>
+  </head>
+  <body style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; padding: 18px;">
+    <p>
+      Redirecting to the subscribe page…
+      <a href="/subscribe.html">Continue</a>
+    </p>
   </body>
 </html>

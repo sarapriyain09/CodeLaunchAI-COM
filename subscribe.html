@@ -200,7 +200,12 @@
     </div>
 
     <script>
-      const ORCH_BASE = 'http://127.0.0.1:7080';
+      // Backend API base. For split hosting, this must point to the backend service.
+      // If you change your backend host, update this value.
+      const ORCH_BASE = 'https://codelaunchai-com-1.onrender.com';
+
+      // Must match frontend TOKEN_KEY in frontend/src/api/orchestrator.ts
+      const TOKEN_KEY = 'cla_access_token';
 
       const statusEl = document.getElementById('status');
       const nameEl = document.getElementById('name');
@@ -276,6 +281,13 @@
           const auth = await postJson(`${ORCH_BASE}/auth/guest`, { email, name: name || null });
           const token = auth && auth.access_token;
           if (!token) throw new Error('Missing access_token');
+
+          // Persist token so the builder can download after checkout returns.
+          try {
+            window.localStorage.setItem(TOKEN_KEY, token);
+          } catch {
+            // Non-fatal; downloads may require re-auth.
+          }
 
           setStatus('Starting checkout…');
           const checkout = await postJson(

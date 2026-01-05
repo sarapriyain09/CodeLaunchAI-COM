@@ -249,11 +249,12 @@ export function previewUrl(projectId: string) {
   return `${ORCH_BASE}/preview/${encodeURIComponent(projectId)}/`;
 }
 
-export async function exportZip(projectId: string, token: string): Promise<Blob> {
+export async function exportZip(projectId: string, token?: string | null): Promise<Blob> {
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+
   const response = await fetch(`${ORCH_BASE}/projects/${encodeURIComponent(projectId)}/export.zip`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers,
   });
 
   if (!response.ok) {

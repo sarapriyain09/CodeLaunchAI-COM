@@ -1,13 +1,9 @@
 import './landing-legacy.css'
 import { useEffect } from 'react'
-import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import * as api from '../api/orchestrator'
 
 export default function Landing() {
   const location = useLocation()
-  const [email, setEmail] = useState('')
-  const [registerStatus, setRegisterStatus] = useState<string | null>(null)
 
   const publicHref = (path: string) => {
     const rawBase = (import.meta as any).env?.VITE_PUBLIC_SITE_URL as string | undefined;
@@ -194,63 +190,18 @@ export default function Landing() {
             Free trial: 10 AI credits for 14 days.
           </p>
 
-          <div className="card" style={{ marginBottom: 24 }}>
-            <h3>Register to enable downloads</h3>
-            <p className="section-subtitle" style={{ marginTop: 8 }}>
-              Enter your email to register. After that, downloads will work once you’re subscribed.
-            </p>
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', marginTop: 12 }}>
-              <input
-                className="nav-link"
-                style={{ minWidth: 260, textAlign: 'left' }}
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <button
-                className="cta primary"
-                type="button"
-                onClick={async () => {
-                  try {
-                    setRegisterStatus(null)
-                    const trimmed = email.trim()
-                    if (!trimmed || !trimmed.includes('@')) {
-                      setRegisterStatus('Please enter a valid email.')
-                      return
-                    }
-                    const resp = await api.authGuest({ email: trimmed, name: null })
-                    api.setAccessToken(resp.access_token)
-                    setRegisterStatus('Registered! You can go back to the builder and retry Download.')
-                  } catch (e) {
-                    const message = e instanceof Error ? e.message : String(e)
-                    setRegisterStatus(`Registration error: ${message}`)
-                  }
-                }}
-              >
-                Register
-              </button>
-              {api.getAccessToken() ? (
-                <span className="section-subtitle" style={{ margin: 0 }}>Status: registered</span>
-              ) : null}
-            </div>
-            {registerStatus ? (
-              <p className="section-subtitle" style={{ marginTop: 10 }}>{registerStatus}</p>
-            ) : null}
-          </div>
-
           <div className="pricing-grid">
             <div className="card">
               <h3>Student</h3>
               <p className="price">$10<span>/mo</span></p>
               <p>50 AI credits/month. Learning + small projects.</p>
-              <a className="cta secondary" href={publicHref("/subscribe.html?plan=student&interval=month")}>Choose Student</a>
+              <a className="cta secondary" href={publicHref("/subscribe.html?plan=student&interval=month")}>Subscribe</a>
             </div>
             <div className="card">
               <h3>Pro</h3>
               <p className="price">$25<span>/mo</span></p>
               <p>300 AI credits/month. Full website + iterations.</p>
-              <a className="cta primary" href={publicHref("/subscribe.html?plan=pro&interval=month")}>Upgrade to Pro</a>
+              <a className="cta primary" href={publicHref("/subscribe.html?plan=pro&interval=month")}>Subscribe</a>
             </div>
             <div className="card">
               <h3>Enterprise</h3>

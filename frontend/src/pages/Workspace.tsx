@@ -115,6 +115,12 @@ export default function Workspace() {
     window.location.hash = "/?scroll=pricing";
   }, []);
 
+  const redirectToSubscribe = useCallback(() => {
+    // Public subscribe page (served from the site root).
+    // Keep this outside HashRouter so it works even when the app is hosted under /app/.
+    window.location.href = "/subscribe.html";
+  }, []);
+
   const refreshUsageStatus = useCallback(async () => {
     try {
       const token = api.getAccessToken();
@@ -125,7 +131,7 @@ export default function Workspace() {
     }
   }, []);
 
-  async function doDownloadZip(token: string) {
+  async function doDownloadZip(token?: string | null) {
     if (!projectId) return;
     setDownloadStatus("Preparing download…");
     try {
@@ -145,11 +151,11 @@ export default function Workspace() {
       if (status === 429) {
         setDownloadStatus(rateLimitHint(error));
       } else if (message.includes("HTTP 401")) {
-        setDownloadStatus("Registration required to download. Redirecting to Pricing…");
-        redirectToPricing();
+        setDownloadStatus("Subscription required to download. Redirecting to Subscribe…");
+        redirectToSubscribe();
       } else if (message.includes("HTTP 402")) {
-        setDownloadStatus("Subscription required to download. Redirecting to Pricing…");
-        redirectToPricing();
+        setDownloadStatus("Subscription required to download. Redirecting to Subscribe…");
+        redirectToSubscribe();
       } else {
         setDownloadStatus(`Download error: ${message}`);
       }
@@ -443,8 +449,8 @@ export default function Workspace() {
     setDownloadStatus(null);
     const token = api.getAccessToken();
     if (!token) {
-      setDownloadStatus("Registration required to download. Redirecting to Pricing…");
-      redirectToPricing();
+      setDownloadStatus("Subscription required to download. Redirecting to Subscribe…");
+      redirectToSubscribe();
       return;
     }
     await doDownloadZip(token);
