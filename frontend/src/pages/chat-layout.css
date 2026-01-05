@@ -440,6 +440,13 @@
   .chatLayoutScreen .mobileOnly {
     display: inline-flex;
   }
+
+  /* Some mobile browsers (or “request desktop site”) report a wider CSS viewport
+     (e.g. ~980px). Wrap actions at this breakpoint so buttons don't overflow. */
+  .chatLayoutScreen .topbarRight {
+    width: 100%;
+    flex-wrap: wrap;
+  }
 }
 
 @media (max-width: 640px) {
