@@ -170,7 +170,19 @@ async def preview_index(project_id: str) -> HTMLResponse:
     dist = _dist_dir(project_id)
     index = dist / 'index.html'
     if not index.exists():
-        raise HTTPException(status_code=404, detail='Preview not built yet.')
+        html = (
+            "<!doctype html>"
+            "<html><head><meta charset='utf-8'/>"
+            "<meta name='viewport' content='width=device-width, initial-scale=1'/>"
+            "<title>Preview not built</title>"
+            "</head><body style='font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; padding: 24px;'>"
+            f"<h1 style='margin: 0 0 8px;'>Preview not built yet</h1>"
+            f"<p style='margin: 0 0 16px;'>Project: <code>{project_id}</code></p>"
+            "<p style='margin: 0 0 16px;'>Go back to the workspace and click <b>Generate</b> (first build) or <b>Update</b> (rebuild). "
+            "Then reopen this preview.</p>"
+            "</body></html>"
+        )
+        return HTMLResponse(html, status_code=404)
     html = index.read_text(encoding='utf-8')
     html = _rewrite_index_asset_paths(html, project_id)
     return HTMLResponse(html)
