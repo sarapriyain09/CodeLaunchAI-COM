@@ -14,6 +14,7 @@ Backend (FastAPI orchestrator):
 - `DATABASE_URL` (optional; enables Postgres persistence)
 - `DB_DISABLE` (`true/false`)
 - `DB_INIT_ON_STARTUP` (`true/false`)
+- `PUBLIC_APP_ORIGIN` (recommended) — set to `https://www.codelaunchai.com` so any direct Render-hosted preview URLs can 302-redirect back to the public domain.
 - `CORS_ALLOW_ORIGINS` (optional)
 - `CORS_ALLOW_ORIGIN_REGEX` (optional)
 - `CORS_ALLOW_CREDENTIALS` (`true/false`)
