@@ -116,7 +116,18 @@ def get_sessionmaker() -> sessionmaker[Session]:
         return _SessionLocal
 
     engine = get_engine()
-    _SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False, future=True)
+    # We intentionally keep ORM-loaded attributes available after commit.
+    # Our `session_scope()` commits on exit even for read-only operations; if
+    # `expire_on_commit=True` (default), ORM instances returned from a function
+    # become expired and then detached when the session closes, causing
+    # DetachedInstanceError when reading attributes.
+    _SessionLocal = sessionmaker(
+        bind=engine,
+        autocommit=False,
+        autoflush=False,
+        future=True,
+        expire_on_commit=False,
+    )
     return _SessionLocal
 
 
