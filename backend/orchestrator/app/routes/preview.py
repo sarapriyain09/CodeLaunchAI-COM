@@ -31,14 +31,55 @@ logger = logging.getLogger(__name__)
 _ASSET_PREFIX_RE = re.compile(r'(?P<q>["\"])\/assets\/', re.IGNORECASE)
 
 
-def _rewrite_index_asset_paths(html: str, project_id: str) -> str:
-    """Rewrite absolute Vite asset paths so previews work under /preview/{project_id}/.
+def _rewrite_index_asset_paths(html: str, base_path: str) -> str:
+    """Rewrite absolute Vite asset paths so previews work under a subpath.
 
     Many Vite builds emit <script src="/assets/..."> which breaks when the app is served
-    from a subpath (our preview is /preview/{project_id}/). We rewrite to a project-scoped
-    asset path handled by preview_assets.
+    from a subpath (e.g. /preview/{project_id}/ or /p/{project_id}/). We rewrite to a
+    project-scoped asset path handled by our preview asset routes.
     """
-    return _ASSET_PREFIX_RE.sub(lambda m: f"{m.group('q')}/preview/{project_id}/assets/", html)
+
+    if not base_path.endswith('/'):
+        base_path = f"{base_path}/"
+    return _ASSET_PREFIX_RE.sub(lambda m: f"{m.group('q')}{base_path}assets/", html)
+
+
+def _preview_index_html(project_id: str, mount: str) -> HTMLResponse:
+    dist = _dist_dir(project_id)
+    index = dist / 'index.html'
+    if not index.exists():
+        html = (
+            "<!doctype html>"
+            "<html><head><meta charset='utf-8'/>"
+            "<meta name='viewport' content='width=device-width, initial-scale=1'/>"
+            "<title>Preview not built</title>"
+            "</head><body style='font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; padding: 24px;'>"
+            f"<h1 style='margin: 0 0 8px;'>Preview not built yet</h1>"
+            f"<p style='margin: 0 0 16px;'>Project: <code>{project_id}</code></p>"
+            "<p style='margin: 0 0 16px;'>Go back to the workspace and click <b>Generate</b> (first build) or <b>Update</b> (rebuild). "
+            "Then reopen this preview.</p>"
+            "</body></html>"
+        )
+        return HTMLResponse(html, status_code=404)
+
+    html = index.read_text(encoding='utf-8')
+    html = _rewrite_index_asset_paths(html, f"/{mount}/{project_id}/")
+    return HTMLResponse(html)
+
+
+def _preview_asset_response(project_id: str, asset_path: str, mount: str):
+    dist = _dist_dir(project_id)
+    target = (dist / asset_path).resolve()
+    if not str(target).startswith(str(dist.resolve())):
+        raise HTTPException(status_code=400, detail='Invalid asset path.')
+    if not target.exists():
+        index = dist / 'index.html'
+        if index.exists():
+            html = index.read_text(encoding='utf-8')
+            html = _rewrite_index_asset_paths(html, f"/{mount}/{project_id}/")
+            return HTMLResponse(html)
+        raise HTTPException(status_code=404, detail='File not found.')
+    return FileResponse(str(target))
 
 
 class MaterializeRequest(BaseModel):
@@ -167,41 +208,28 @@ async def build_project(project_id: str) -> BuildResponse:
 
 @router.get('/preview/{project_id}/', response_class=HTMLResponse)
 async def preview_index(project_id: str) -> HTMLResponse:
-    dist = _dist_dir(project_id)
-    index = dist / 'index.html'
-    if not index.exists():
-        html = (
-            "<!doctype html>"
-            "<html><head><meta charset='utf-8'/>"
-            "<meta name='viewport' content='width=device-width, initial-scale=1'/>"
-            "<title>Preview not built</title>"
-            "</head><body style='font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; padding: 24px;'>"
-            f"<h1 style='margin: 0 0 8px;'>Preview not built yet</h1>"
-            f"<p style='margin: 0 0 16px;'>Project: <code>{project_id}</code></p>"
-            "<p style='margin: 0 0 16px;'>Go back to the workspace and click <b>Generate</b> (first build) or <b>Update</b> (rebuild). "
-            "Then reopen this preview.</p>"
-            "</body></html>"
-        )
-        return HTMLResponse(html, status_code=404)
-    html = index.read_text(encoding='utf-8')
-    html = _rewrite_index_asset_paths(html, project_id)
-    return HTMLResponse(html)
+    return _preview_index_html(project_id, mount='preview')
+
+
+@router.get('/p/{project_id}/', response_class=HTMLResponse)
+async def public_preview_index(project_id: str) -> HTMLResponse:
+    """Public-domain-friendly alias for preview.
+
+    Some hosts (notably Vercel) may treat /preview/* specially. We provide /p/* as a stable
+    alias so the frontend can open previews under the main domain without warnings.
+    """
+
+    return _preview_index_html(project_id, mount='p')
 
 
 @router.get('/preview/{project_id}/{asset_path:path}')
 async def preview_assets(project_id: str, asset_path: str):
-    dist = _dist_dir(project_id)
-    target = (dist / asset_path).resolve()
-    if not str(target).startswith(str(dist.resolve())):
-        raise HTTPException(status_code=400, detail='Invalid asset path.')
-    if not target.exists():
-        index = dist / 'index.html'
-        if index.exists():
-            html = index.read_text(encoding='utf-8')
-            html = _rewrite_index_asset_paths(html, project_id)
-            return HTMLResponse(html)
-        raise HTTPException(status_code=404, detail='File not found.')
-    return FileResponse(str(target))
+    return _preview_asset_response(project_id, asset_path, mount='preview')
+
+
+@router.get('/p/{project_id}/{asset_path:path}')
+async def public_preview_assets(project_id: str, asset_path: str):
+    return _preview_asset_response(project_id, asset_path, mount='p')
 
 
 @router.get('/assets/{asset_path:path}')
@@ -213,7 +241,7 @@ async def preview_assets_root(asset_path: str, request: Request):
     """
 
     referer = request.headers.get('referer') or request.headers.get('referrer') or ''
-    match = re.search(r'/preview/(?P<pid>[^/]+)/', referer)
+    match = re.search(r'/(?:preview|p)/(?P<pid>[^/]+)/', referer)
     if not match:
         raise HTTPException(status_code=404, detail='Unknown preview context for /assets request.')
 
