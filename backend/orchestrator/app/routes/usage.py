@@ -6,6 +6,7 @@ from app.services.auth import try_get_user
 from app.services.subscription import is_subscribed
 from app.services.usage_context import get_current_usage_actor, get_current_usage_plan_tier
 from app.services.usage_store import get_usage_status
+from app.services.request_ip import get_request_client_ip
 import os
 
 
@@ -31,7 +32,7 @@ def usage_status(request: Request) -> dict:
 
     actor = get_current_usage_actor()
     if not actor:
-        host = (request.client.host if request.client else "unknown")
+        host = get_request_client_ip(request)
         actor = f"anon:{host}"
 
     status = get_usage_status(actor=actor, plan_tier=plan_tier)

@@ -42,6 +42,7 @@ from app.services.usage_context import (
     set_current_usage_plan_tier,
     set_current_usage_subscribed,
 )
+from app.services.request_ip import get_request_client_ip
 from app.services.rate_limiter import check_rate_limit, rate_limits_enabled
 
 
@@ -69,7 +70,7 @@ async def _usage_actor_middleware(request: Request, call_next):
     if user and user.id:
         actor = f"user:{user.id}"
     else:
-        host = (request.client.host if request.client else "unknown")
+        host = get_request_client_ip(request)
         actor = f"anon:{host}"
 
     set_current_usage_actor(actor)
