@@ -23,6 +23,12 @@ Backend (FastAPI orchestrator):
 - `USAGE_LIMITS_ENABLED` (`true/false`)
 - `RATE_LIMIT_ENABLED` (`true/false`)
 
+Frontend (Vite build-time env):
+- `VITE_ORCH_BASE_URL` (required for split hosting) — set to the backend URL (e.g. `https://codelaunchai-com-1.onrender.com`).
+- `VITE_PUBLIC_SITE_URL` (optional) — set to the public site URL (e.g. `https://www.codelaunchai.com`) for building absolute links.
+
+Note: Vite injects `VITE_*` vars at build time. If `VITE_ORCH_BASE_URL` is missing or wrong, the deployed JS can end up calling `http://localhost:7080` / `http://127.0.0.1:7080` and you’ll see `ERR_CONNECTION_REFUSED` in the browser.
+
 Stripe (only if billing is enabled):
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`

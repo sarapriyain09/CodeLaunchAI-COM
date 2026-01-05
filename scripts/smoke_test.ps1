@@ -24,7 +24,30 @@ function Try-Request([scriptblock]$Fn) {
   try {
     return @{ ok=$true; value=(& $Fn) }
   } catch {
-    return @{ ok=$false; error=$_.Exception.Message }
+    $ex = $_.Exception
+    $result = @{ ok=$false; error=$ex.Message }
+
+    if ($ex.Response) {
+      try {
+        $resp = $ex.Response
+        $result.status = [int]$resp.StatusCode
+        $hdrs = @{}
+        $resp.Headers.AllKeys | ForEach-Object { $hdrs[$_] = $resp.Headers[$_] }
+        $result.headers = $hdrs
+
+        try {
+          $sr = New-Object System.IO.StreamReader($resp.GetResponseStream())
+          $result.body = $sr.ReadToEnd()
+          $sr.Close()
+        } catch {
+          # ignore body read errors
+        }
+      } catch {
+        # ignore response parse errors
+      }
+    }
+
+    return $result
   }
 }
 
@@ -112,9 +135,11 @@ if ($r5.ok) {
 }
 
 # 6) Basic CORS preflight should not 400 (dev signal)
+$origin = if ($frontend) { $frontend } else { 'http://localhost:3000' }
+Write-Host ("INFO: CORS preflight Origin={0}" -f $origin)
 $r6 = Try-Request {
   Invoke-WebRequest -UseBasicParsing -Method Options ("$base/projects") -Headers @{
-    Origin=($frontend ? $frontend : 'http://localhost:3000')
+    Origin=$origin
     'Access-Control-Request-Method'='GET'
     'Access-Control-Request-Headers'='content-type,authorization'
   }
@@ -123,6 +148,17 @@ if ($r6.ok) {
   $allOk = (Assert-Status "OPTIONS /projects" $r6.value.StatusCode @(200,204)) -and $allOk
 } else {
   Write-Result "OPTIONS /projects" $false $r6.error
+  if ($null -ne $r6.status) {
+    Write-Host ("INFO: OPTIONS status={0}" -f $r6.status)
+  }
+  if ($r6.headers) {
+    Write-Host "INFO: Response headers:"
+    $r6.headers.GetEnumerator() | Sort-Object Name | ForEach-Object { Write-Host ("  {0}: {1}" -f $_.Key, $_.Value) }
+  }
+  if ($r6.body) {
+    Write-Host "INFO: Response body:"
+    Write-Host $r6.body
+  }
   $allOk = $false
 }
 

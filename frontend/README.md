@@ -44,3 +44,15 @@ npm --prefix frontend run build:vite:watch
 ## Notes
 
 - `npm run dev` is disabled on purpose to keep payment/subscription off the Vite server.
+
+## Split hosting (frontend on www, backend on Render)
+
+If the frontend and backend are on different domains, you **must** set the API base at build time:
+
+```powershell
+$env:VITE_ORCH_BASE_URL='https://codelaunchai-com-1.onrender.com'
+$env:VITE_PUBLIC_SITE_URL='https://www.codelaunchai.com'
+npm --prefix frontend run build:backend
+```
+
+If `VITE_ORCH_BASE_URL` is missing or incorrect, the built app may try to call `http://localhost:7080` / `http://127.0.0.1:7080` and the browser will show `ERR_CONNECTION_REFUSED`.
