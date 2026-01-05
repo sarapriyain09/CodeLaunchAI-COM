@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 
 _ASSET_PREFIX_RE = re.compile(r'(?P<q>["\"])\/assets\/', re.IGNORECASE)
+_REL_ASSET_PREFIX_RE = re.compile(r'(?P<q>["\"])\.\/assets\/', re.IGNORECASE)
 
 
 def _rewrite_index_asset_paths(html: str, base_path: str) -> str:
@@ -41,7 +42,13 @@ def _rewrite_index_asset_paths(html: str, base_path: str) -> str:
 
     if not base_path.endswith('/'):
         base_path = f"{base_path}/"
-    return _ASSET_PREFIX_RE.sub(lambda m: f"{m.group('q')}{base_path}assets/", html)
+
+    # Handle both absolute and relative asset URLs emitted by Vite.
+    # - src="/assets/..." (absolute)
+    # - src="./assets/..." (relative; breaks when the page URL has no trailing slash)
+    html = _ASSET_PREFIX_RE.sub(lambda m: f"{m.group('q')}{base_path}assets/", html)
+    html = _REL_ASSET_PREFIX_RE.sub(lambda m: f"{m.group('q')}{base_path}assets/", html)
+    return html
 
 
 def _preview_index_html(project_id: str, mount: str) -> HTMLResponse:
