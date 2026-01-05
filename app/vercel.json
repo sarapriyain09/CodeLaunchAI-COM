@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/preview/:path*",
+      "destination": "https://codelaunchai-com-1.onrender.com/preview/:path*"
+    },
+    {
+      "source": "/assets/:path*",
+      "destination": "https://codelaunchai-com-1.onrender.com/assets/:path*"
+    }
+  ]
+}
