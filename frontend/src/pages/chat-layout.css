@@ -458,7 +458,8 @@
 
   .chatLayoutScreen .topbarRight {
     width: 100%;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: stretch;
     gap: 10px;
   }
 
@@ -466,11 +467,14 @@
     height: 34px;
     padding: 0 10px;
     font-size: 12px;
+    width: 100%;
+    justify-content: center;
   }
 
   .chatLayoutScreen .ghostBtn {
     padding: 9px 12px;
     font-size: 13px;
+    width: 100%;
   }
 
   .chatLayoutScreen .composer {
