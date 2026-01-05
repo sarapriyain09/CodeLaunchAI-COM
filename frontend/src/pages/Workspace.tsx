@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./chat-layout.css";
 import { useProjectFiles } from "../state/useProjectFiles";
 import * as api from "../api/orchestrator";
@@ -82,6 +82,60 @@ export default function Workspace() {
   const [hasPreview, setHasPreview] = useState<boolean | null>(null);
   const [buildProgress, setBuildProgress] = useState<number | null>(null);
   const [showCodePanel, setShowCodePanel] = useState(true);
+  const [generationStatus, setGenerationStatus] = useState<string | null>(null);
+  const revealTimersRef = useRef<number[]>([]);
+  const revealBufferRef = useRef<api.FileItem[]>([]);
+
+  const clearRevealTimers = useCallback(() => {
+    for (const id of revealTimersRef.current) {
+      window.clearTimeout(id);
+    }
+    revealTimersRef.current = [];
+  }, []);
+
+  const revealFiles = useCallback((nextFiles: api.FileItem[], label: string) => {
+    clearRevealTimers();
+    revealBufferRef.current = [];
+    setGenerationStatus(label);
+    setShowCodePanel(true);
+    setFiles([]);
+
+    if (!Array.isArray(nextFiles) || nextFiles.length === 0) {
+      const doneId = window.setTimeout(() => setGenerationStatus(null), 500);
+      revealTimersRef.current.push(doneId);
+      return;
+    }
+
+    // Lock selection to the first file so the panel has something to show as files arrive.
+    setSelectedPath(nextFiles[0].path);
+
+    // Reveal in small batches to create a “generating…” feel (even though backend returns the
+    // full file list at once).
+    const batchSize = 3;
+    const delayMs = 80;
+    const total = nextFiles.length;
+    const batches = Math.ceil(total / batchSize);
+
+    for (let batch = 0; batch < batches; batch += 1) {
+      const id = window.setTimeout(() => {
+        const start = batch * batchSize;
+        const end = Math.min(total, start + batchSize);
+        revealBufferRef.current = revealBufferRef.current.concat(nextFiles.slice(start, end));
+        setFiles(revealBufferRef.current);
+        setGenerationStatus(`${label} ${end}/${total}`);
+      }, batch * delayMs);
+      revealTimersRef.current.push(id);
+    }
+
+    const doneId = window.setTimeout(() => setGenerationStatus(null), batches * delayMs + 350);
+    revealTimersRef.current.push(doneId);
+  }, [clearRevealTimers, setFiles, setSelectedPath]);
+
+  useEffect(() => {
+    return () => {
+      clearRevealTimers();
+    };
+  }, [clearRevealTimers]);
 
   function coerceOfflineMeta(meta: unknown): { offline: boolean; reason?: string } | null {
     if (!meta || typeof meta !== "object") return null;
@@ -337,6 +391,8 @@ export default function Workspace() {
     setIsBusy(true);
     setStreamUrl(null);
     setHasPreview(null);
+    setGenerationStatus("Planning blueprint…");
+    clearRevealTimers();
 
     try {
       const planResponse = await api.plan(goal.trim());
@@ -354,8 +410,7 @@ export default function Workspace() {
       });
 
       const filesResponse = await api.generateFiles(planResponse.blueprint, PROJECT_NAME);
-      setFiles(filesResponse.files);
-      setShowCodePanel(true);
+      revealFiles(filesResponse.files, "Generating files…");
 
       // Persist generated file tree/content for this project (best-effort).
       try {
@@ -369,6 +424,7 @@ export default function Workspace() {
       const url = api.buildStreamUrl(projectId, true);
       setStreamUrl(url);
       setBlueprintMeta("Building preview…");
+      setGenerationStatus(null);
       void refreshUsageStatus();
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -383,6 +439,7 @@ export default function Workspace() {
         setBlueprintMeta(`Error: ${message}`);
       }
       void refreshUsageStatus();
+      setGenerationStatus(null);
     } finally {
       setIsBusy(false);
     }
@@ -523,6 +580,8 @@ export default function Workspace() {
     setStreamUrl(null);
     setHasPreview(null);
     setBlueprintMeta("Updating app…");
+    setGenerationStatus("Updating files…");
+    clearRevealTimers();
 
     try {
       const resp = await api.patchProject(projectId, instruction, PROJECT_NAME);
@@ -536,7 +595,7 @@ export default function Workspace() {
       try {
         const nextFiles = await api.getProjectFiles(projectId);
         if (Array.isArray(nextFiles.files)) {
-          setFiles(nextFiles.files);
+          revealFiles(nextFiles.files, "Updating files…");
         }
       } catch {
         // Non-fatal: patch/build can still proceed.
@@ -544,6 +603,7 @@ export default function Workspace() {
 
       const url = api.buildStreamUrl(projectId, false);
       setStreamUrl(url);
+      setGenerationStatus(null);
       void refreshUsageStatus();
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -558,6 +618,7 @@ export default function Workspace() {
         setBlueprintMeta(`Update error: ${message}`);
       }
       void refreshUsageStatus();
+      setGenerationStatus(null);
     } finally {
       setIsBusy(false);
     }
@@ -636,6 +697,7 @@ export default function Workspace() {
 
   const subtitleText =
     blueprintMeta ??
+    generationStatus ??
     (!projectId
       ? "Creating project…"
       : isBusy
