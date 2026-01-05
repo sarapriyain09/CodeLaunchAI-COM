@@ -222,6 +222,11 @@ async def public_preview_index(project_id: str) -> HTMLResponse:
     return _preview_index_html(project_id, mount='p')
 
 
+@router.get('/p/{project_id}', response_class=HTMLResponse, include_in_schema=False)
+async def public_preview_index_noslash(project_id: str) -> HTMLResponse:
+    return _preview_index_html(project_id, mount='p')
+
+
 @router.get('/previews/{project_id}/', response_class=HTMLResponse)
 async def public_previews_index(project_id: str) -> HTMLResponse:
     """Second public-domain-friendly alias for preview.
@@ -230,6 +235,11 @@ async def public_previews_index(project_id: str) -> HTMLResponse:
     longer, explicit path that is unlikely to collide with platform routing.
     """
 
+    return _preview_index_html(project_id, mount='previews')
+
+
+@router.get('/previews/{project_id}', response_class=HTMLResponse, include_in_schema=False)
+async def public_previews_index_noslash(project_id: str) -> HTMLResponse:
     return _preview_index_html(project_id, mount='previews')
 
 
