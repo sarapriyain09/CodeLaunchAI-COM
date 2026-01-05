@@ -40,6 +40,9 @@ export default function Landing() {
             <button className="nav-link" type="button" onClick={() => scrollToId('how-it-works')}>
               How it Works
             </button>
+            <button className="nav-link" type="button" onClick={() => scrollToId('examples')}>
+              Examples
+            </button>
             <button className="nav-link" type="button" onClick={() => scrollToId('pricing')}>
               Pricing
             </button>
@@ -161,10 +164,34 @@ export default function Landing() {
           </div>
         </section>
 
+        <section id="examples">
+          <h2 className="section-title">Examples you can generate</h2>
+          <p className="section-subtitle">
+            A few realistic apps students and indie builders ship with the blueprint-first workflow.
+          </p>
+          <div className="examples-grid">
+            <div className="card">
+              <h3>Subscription Habit Tracker</h3>
+              <p>Landing, auth, dashboard, Stripe tiers, email reminders.</p>
+            </div>
+            <div className="card">
+              <h3>Local Business Booking Site</h3>
+              <p>Services page, booking form, availability, contact, clean SEO structure.</p>
+            </div>
+            <div className="card">
+              <h3>Course Cohort Portal</h3>
+              <p>Projects list, assignments, submissions, announcements, student-friendly UI.</p>
+            </div>
+          </div>
+        </section>
+
         <section id="pricing">
           <h2 className="section-title">Pricing that scales with ambition</h2>
           <p className="section-subtitle">
             Simple tiers with AI credits so you can plan semesters, bootcamps, or solo launches.
+          </p>
+          <p className="section-subtitle" style={{ marginTop: -20 }}>
+            Free trial: 10 AI credits for 14 days.
           </p>
 
           <div className="card" style={{ marginBottom: 24 }}>
@@ -216,14 +243,20 @@ export default function Landing() {
             <div className="card">
               <h3>Student</h3>
               <p className="price">$10<span>/mo</span></p>
-              <p>200 AI credits, full-stack generation, Stripe workflows, community support.</p>
-              <a className="cta secondary" href={publicHref("/subscribe.html?plan=student&interval=month")}>Start Student Trial</a>
+              <p>50 AI credits/month. Learning + small projects.</p>
+              <a className="cta secondary" href={publicHref("/subscribe.html?plan=student&interval=month")}>Choose Student</a>
             </div>
             <div className="card">
               <h3>Pro</h3>
               <p className="price">$25<span>/mo</span></p>
-              <p>1000 AI credits, larger deployments, priority support, team workspaces.</p>
+              <p>300 AI credits/month. Full website + iterations.</p>
               <a className="cta primary" href={publicHref("/subscribe.html?plan=pro&interval=month")}>Upgrade to Pro</a>
+            </div>
+            <div className="card">
+              <h3>Enterprise</h3>
+              <p className="price">Custom</p>
+              <p>Teams / agencies. Custom credits and support.</p>
+              <a className="cta secondary" href="#support">Contact sales</a>
             </div>
           </div>
         </section>

@@ -97,3 +97,36 @@ def require_user(request: Request) -> UserPublic:
         name=user.get("name"),
         picture=user.get("picture"),
     )
+
+
+def try_get_user(request: Request) -> UserPublic | None:
+    """Best-effort auth helper.
+
+    Returns None if the request is unauthenticated/invalid, instead of raising 401.
+    Useful for trial usage caps and anonymous usage metering.
+    """
+
+    token = _get_bearer_token(request)
+    if not token:
+        return None
+
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+    except Exception:
+        return None
+
+    user_id = str(payload.get("sub") or "")
+    if not user_id:
+        return None
+
+    user = get_user(user_id)
+    if not user:
+        return None
+
+    return UserPublic(
+        id=user.get("id", user_id),
+        email=user.get("email", ""),
+        name=user.get("name"),
+        picture=user.get("picture"),
+    )
+

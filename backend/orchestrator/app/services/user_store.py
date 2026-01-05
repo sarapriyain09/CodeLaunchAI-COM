@@ -91,6 +91,8 @@ def upsert_user_from_google(sub: str, email: str, name: str | None, picture: str
                 "stripe_customer_id": existing.stripe_customer_id,
                 "subscription_status": existing.subscription_status,
                 "subscription_current_period_end": existing.subscription_current_period_end,
+                    "subscription_plan": getattr(existing, "subscription_plan", None),
+                    "subscription_interval": getattr(existing, "subscription_interval", None),
             }
 
     data = _load()
@@ -111,6 +113,8 @@ def upsert_user_from_google(sub: str, email: str, name: str | None, picture: str
             "stripe_customer_id": None,
             "subscription_status": None,
             "subscription_current_period_end": None,
+            "subscription_plan": None,
+            "subscription_interval": None,
         }
         users.append(user)
     else:
@@ -172,6 +176,8 @@ def upsert_user_from_email(*, email: str, name: str | None) -> dict:
                 "stripe_customer_id": existing.stripe_customer_id,
                 "subscription_status": existing.subscription_status,
                 "subscription_current_period_end": existing.subscription_current_period_end,
+                    "subscription_plan": getattr(existing, "subscription_plan", None),
+                    "subscription_interval": getattr(existing, "subscription_interval", None),
             }
 
     email_norm = (email or "").strip().lower()
@@ -195,6 +201,8 @@ def upsert_user_from_email(*, email: str, name: str | None) -> dict:
             "stripe_customer_id": None,
             "subscription_status": None,
             "subscription_current_period_end": None,
+            "subscription_plan": None,
+            "subscription_interval": None,
         }
         users.append(user)
     else:
@@ -223,6 +231,8 @@ def get_user(user_id: str) -> dict | None:
                 "stripe_customer_id": row.stripe_customer_id,
                 "subscription_status": row.subscription_status,
                 "subscription_current_period_end": row.subscription_current_period_end,
+                    "subscription_plan": getattr(row, "subscription_plan", None),
+                    "subscription_interval": getattr(row, "subscription_interval", None),
             }
 
     data = _load()
@@ -252,6 +262,8 @@ def _update_user(user_id: str, patch: dict) -> dict | None:
                 "stripe_customer_id": row.stripe_customer_id,
                 "subscription_status": row.subscription_status,
                 "subscription_current_period_end": row.subscription_current_period_end,
+                    "subscription_plan": getattr(row, "subscription_plan", None),
+                    "subscription_interval": getattr(row, "subscription_interval", None),
             }
 
     data = _load()
@@ -283,6 +295,8 @@ def find_user_by_stripe_customer_id(customer_id: str) -> dict | None:
                 "stripe_customer_id": row.stripe_customer_id,
                 "subscription_status": row.subscription_status,
                 "subscription_current_period_end": row.subscription_current_period_end,
+                    "subscription_plan": getattr(row, "subscription_plan", None),
+                    "subscription_interval": getattr(row, "subscription_interval", None),
             }
 
     data = _load()
@@ -303,9 +317,13 @@ def set_subscription_status(
     user_id: str,
     status: str | None,
     current_period_end: int | None,
+    plan: str | None = None,
+    interval: str | None = None,
 ) -> dict | None:
     patch: dict = {
         "subscription_status": status,
         "subscription_current_period_end": current_period_end,
+        "subscription_plan": plan,
+        "subscription_interval": interval,
     }
     return _update_user(user_id, patch)

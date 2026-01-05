@@ -1,7 +1,9 @@
 type Props = {
   onGenerate: () => void;
+  onUpdate?: () => void;
   isBusy?: boolean;
   isGenerateDisabled?: boolean;
+  isUpdateDisabled?: boolean;
   projects?: Array<{ id: string; name: string }>;
   activeProjectId?: string | null;
   onSelectProject?: (projectId: string) => void;
@@ -13,8 +15,10 @@ type Props = {
 
 export default function TopBar({
   onGenerate,
+  onUpdate,
   isBusy,
   isGenerateDisabled,
+  isUpdateDisabled,
   projects,
   activeProjectId,
   onSelectProject,
@@ -71,6 +75,17 @@ export default function TopBar({
               <span className="text-xs text-[color:var(--text-muted)]/70">{subscribeHint}</span>
             ) : null}
           </div>
+        ) : null}
+
+        {onUpdate ? (
+          <button
+            className="px-4 py-2 rounded-full text-sm font-semibold border border-[color:var(--border)] disabled:opacity-60 disabled:cursor-not-allowed"
+            onClick={onUpdate}
+            disabled={isBusy || isUpdateDisabled}
+            title="Update the existing app (incremental)"
+          >
+            Update
+          </button>
         ) : null}
 
         <button

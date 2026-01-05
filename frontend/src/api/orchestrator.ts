@@ -49,7 +49,39 @@ export type ProjectFiles = {
   files: FileItem[];
 };
 
-const ORCH_BASE = import.meta.env.VITE_ORCH_BASE_URL ?? "http://localhost:7080";
+export type PatchResponse = {
+  project_id: string;
+  changed_paths: string[];
+  removed_paths: string[];
+  file_count: number;
+  meta?: unknown;
+};
+
+export type UsageStatus = {
+  period: string;
+  plan_tier: "trial" | "trial_expired" | "student" | "pro" | "enterprise" | string;
+  credits_used: number;
+  credits_limit: number;
+  credits_remaining: number;
+  tokens_used: number;
+  subscribed: boolean;
+  trial_active?: boolean;
+  trial_days?: number;
+  actor?: string;
+};
+
+function normalizeBaseUrl(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+
+  // Windows often resolves localhost -> ::1 (IPv6). If the backend is bound to 127.0.0.1,
+  // calls to http://localhost:<port> can fail. Normalize to IPv4 loopback.
+  return trimmed.replace("://localhost", "://127.0.0.1");
+}
+
+const ORCH_BASE =
+  normalizeBaseUrl(String(import.meta.env.VITE_ORCH_BASE_URL ?? "")) ||
+  (typeof window !== "undefined" ? window.location.origin : "http://127.0.0.1:7080");
 
 async function http<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${ORCH_BASE}${path}`, {
@@ -178,6 +210,13 @@ export async function materialize(
   );
 }
 
+export async function patchProject(projectId: string, instruction: string, projectName: string) {
+  return http<PatchResponse>(`/projects/${encodeURIComponent(projectId)}/patch`, {
+    method: "POST",
+    body: JSON.stringify({ instruction, project_name: projectName }),
+  });
+}
+
 export async function listProjects() {
   return http<{ projects: Project[] }>("/projects");
 }
@@ -238,6 +277,17 @@ export async function billingStatus(token: string): Promise<{ subscribed: boolea
   }
 
   return (await response.json()) as { subscribed: boolean };
+}
+
+export async function getUsageStatus(token?: string | null): Promise<UsageStatus> {
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const response = await fetch(`${ORCH_BASE}/usage/status`, { headers });
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`HTTP ${response.status} ${response.statusText}: ${detail.slice(0, 500)}`);
+  }
+  return (await response.json()) as UsageStatus;
 }
 
 export type BillingInterval = "month" | "year";

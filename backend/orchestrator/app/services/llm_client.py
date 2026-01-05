@@ -20,9 +20,62 @@ class LLMConnectionError(RuntimeError):
 
 
 async def call_gpt_chat(messages: List[Dict[str, Any]], timeout_s: float = 60.0) -> Dict[str, Any]:
+    # Enforce usage limits per request actor (if set by middleware).
+    # This keeps the change localized and covers planner/generator/patch flows.
+    from app.services.usage_context import (
+        get_current_usage_action,
+        get_current_usage_actor,
+        get_current_usage_credits_charged,
+        get_current_usage_plan_tier,
+        set_current_usage_credits_charged,
+    )
+    from app.services.usage_store import (
+        add_credits,
+        add_tokens,
+        credit_cost_for_action,
+        ensure_under_limit,
+        estimate_tokens_from_text,
+    )
+
+    actor = get_current_usage_actor()
+    if actor:
+        # Charge credits once per request action, even if multiple LLM calls happen.
+        if not get_current_usage_credits_charged():
+            action = get_current_usage_action()
+            credits = credit_cost_for_action(action)
+            if credits > 0:
+                ensure_under_limit(actor=actor, plan_tier=get_current_usage_plan_tier(), credits_to_spend=credits)
+                add_credits(actor=actor, credits=credits)
+            set_current_usage_credits_charged(True)
+
+    resp: Dict[str, Any]
     if _prefer_openai():
-        return await _call_openai_chat(messages, timeout_s=timeout_s)
-    return await _call_gateway_chat(messages, timeout_s=timeout_s)
+        resp = await _call_openai_chat(messages, timeout_s=timeout_s)
+    else:
+        resp = await _call_gateway_chat(messages, timeout_s=timeout_s)
+
+    if actor:
+        usage = resp.get("usage") if isinstance(resp, dict) else None
+        tokens = 0
+        if isinstance(usage, dict):
+            total = usage.get("total_tokens")
+            if isinstance(total, int):
+                tokens = total
+        if tokens <= 0:
+            # Gateway mode: estimate tokens from prompt+reply.
+            parts: list[str] = []
+            for m in messages[-20:]:
+                c = m.get("content") if isinstance(m, dict) else None
+                if isinstance(c, str):
+                    parts.append(c)
+            reply = resp.get("reply") if isinstance(resp, dict) else None
+            if isinstance(reply, str):
+                parts.append(reply)
+            tokens = estimate_tokens_from_text("\n".join(parts))
+        if tokens > 0:
+            add_tokens(actor=actor, tokens=tokens)
+
+    return resp
 
 
 async def _call_gateway_chat(messages: List[Dict[str, Any]], timeout_s: float) -> Dict[str, Any]:
@@ -80,5 +133,10 @@ async def _call_openai_chat(messages: List[Dict[str, Any]], timeout_s: float) ->
     if not isinstance(reply, str) or not reply.strip():
         raise LLMConnectionError('OpenAI API returned an empty response')
 
+    usage = data.get("usage") if isinstance(data, dict) else None
+    if not isinstance(usage, dict):
+        usage = {}
+
     # Normalize to the planner's expected shape.
-    return {'reply': reply}
+    return {"reply": reply, "usage": usage}
+

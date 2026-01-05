@@ -335,7 +335,102 @@ async def plan_blueprint(goal: str, context: Dict[str, Any] | None = None) -> Tu
                 'reason': str(exc)[:500],
             }
         second_text = _extract_text(second_reply)
-        blueprint_obj = json.loads(second_text)
+        try:
+            blueprint_obj = json.loads(second_text)
+            blueprint_obj = _normalize_blueprint_payload(blueprint_obj)
+            blueprint = Blueprint.model_validate(blueprint_obj)
+            return blueprint, {'attempts': 2, 'raw': second_text}
+        except (json.JSONDecodeError, ValidationError) as exc:
+            blueprint = _fallback_blueprint(goal, context)
+            return blueprint, {
+                'attempts': 2,
+                'fallback': True,
+                'reason': f'invalid_blueprint_after_retry: {str(exc)[:300]}',
+                'raw': second_text[:2000],
+            }
+
+
+PATCH_SYSTEM_PROMPT = (
+    "You are a senior product designer and full-stack architect.\n"
+    "You must output ONLY valid JSON matching the Blueprint schema.\n"
+    "No markdown. No code fences. No commentary.\n\n"
+    "Task:\n"
+    "- You will be given an existing Blueprint JSON and a change instruction.\n"
+    "- Update the blueprint to satisfy the instruction while preserving unrelated intent.\n"
+    "- Keep routes/components to a reasonable MVP scope (3–6 routes).\n\n"
+    "Rules:\n"
+    "- Output must be a single JSON object.\n"
+    "- Do not invent new schema fields.\n"
+    "- Ensure routes paths are unique and start with '/'.\n"
+)
+
+
+async def patch_blueprint(existing: Blueprint, instruction: str) -> Tuple[Blueprint, Dict[str, Any]]:
+    """Revise an existing blueprint according to an instruction."""
+
+    existing_json = existing.model_dump(mode="json")
+    user_prompt = (
+        "Existing Blueprint JSON:\n"
+        f"{json.dumps(existing_json, ensure_ascii=False)}\n\n"
+        "Change instruction:\n"
+        f"{instruction}\n\n"
+        "Output ONLY the full updated Blueprint JSON (not a diff)."
+    )
+
+    messages: List[Dict[str, Any]] = [
+        {"role": "system", "content": PATCH_SYSTEM_PROMPT},
+        {"role": "user", "content": user_prompt},
+    ]
+
+    try:
+        first_reply = await call_gpt_chat(messages)
+    except LLMConnectionError as exc:
+        # Offline: best-effort keep blueprint unchanged.
+        return existing, {
+            "attempts": 0,
+            "offline": True,
+            "reason": str(exc)[:500],
+        }
+
+    first_text = _extract_text(first_reply)
+
+    try:
+        blueprint_obj = json.loads(first_text)
         blueprint_obj = _normalize_blueprint_payload(blueprint_obj)
         blueprint = Blueprint.model_validate(blueprint_obj)
-        return blueprint, {'attempts': 2, 'raw': second_text}
+        return blueprint, {"attempts": 1, "raw": first_text}
+    except (json.JSONDecodeError, ValidationError) as error:
+        fixer_prompt = (
+            "Your previous output was invalid JSON or did not match the schema.\n"
+            "Fix it and output ONLY valid JSON, nothing else.\n"
+            f"Error summary: {str(error)[:500]}\n"
+            "Previous output:\n"
+            f"{first_text}"
+        )
+        second_messages = [
+            {"role": "system", "content": PATCH_SYSTEM_PROMPT},
+            {"role": "user", "content": fixer_prompt},
+        ]
+
+        try:
+            second_reply = await call_gpt_chat(second_messages)
+        except LLMConnectionError as exc:
+            return existing, {
+                "attempts": 1,
+                "offline": True,
+                "reason": str(exc)[:500],
+            }
+
+        second_text = _extract_text(second_reply)
+        try:
+            blueprint_obj = json.loads(second_text)
+            blueprint_obj = _normalize_blueprint_payload(blueprint_obj)
+            blueprint = Blueprint.model_validate(blueprint_obj)
+            return blueprint, {"attempts": 2, "raw": second_text}
+        except (json.JSONDecodeError, ValidationError) as exc:
+            return existing, {
+                "attempts": 2,
+                "fallback": True,
+                "reason": f"invalid_blueprint_after_retry: {str(exc)[:300]}",
+                "raw": second_text[:2000],
+            }

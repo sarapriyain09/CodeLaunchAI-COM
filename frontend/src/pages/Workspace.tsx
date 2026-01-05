@@ -33,11 +33,40 @@ function formatProjectTimestamp(iso?: string | null) {
   return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
+function parseHttpStatusFromError(error: unknown): number | null {
+  const message = error instanceof Error ? error.message : String(error);
+  const match = message.match(/\bHTTP\s+(\d{3})\b/);
+  if (!match) return null;
+  const code = Number(match[1]);
+  return Number.isFinite(code) ? code : null;
+}
+
+function tryExtractHttpJsonDetail(error: unknown): any | null {
+  const message = error instanceof Error ? error.message : String(error);
+  const idx = message.indexOf(": ");
+  if (idx < 0) return null;
+  const tail = message.slice(idx + 2).trim();
+  if (!tail.startsWith("{") && !tail.startsWith("[")) return null;
+  try {
+    return JSON.parse(tail);
+  } catch {
+    return null;
+  }
+}
+
+function rateLimitHint(error: unknown): string {
+  const payload = tryExtractHttpJsonDetail(error);
+  const retry = payload && typeof payload.retry_after_seconds === "number" ? payload.retry_after_seconds : null;
+  if (retry && retry > 0) return `You're sending requests too fast. Try again in ~${retry}s.`;
+  return "You're sending requests too fast. Please wait a few seconds and try again.";
+}
+
 export default function Workspace() {
-  const { setFiles } = useProjectFiles();
+  const { files, setFiles, selectedPath, setSelectedPath, selectedFile } = useProjectFiles();
   const [projects, setProjects] = useState<api.Project[]>([]);
   const [projectId, setProjectId] = useState<string | null>(() => getActiveSessionProjectId());
   const [downloadStatus, setDownloadStatus] = useState<string | null>(null);
+  const [usageStatus, setUsageStatus] = useState<api.UsageStatus | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [threadQuery, setThreadQuery] = useState("");
   const [chatMessages, setChatMessages] = useState<api.ChatMessage[]>([DEFAULT_ASSISTANT_MESSAGE]);
@@ -49,11 +78,51 @@ export default function Workspace() {
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [blueprintMeta, setBlueprintMeta] = useState<string | null>(null);
+  const [aiOffline, setAiOffline] = useState<{ offline: boolean; reason?: string } | null>(null);
+  const [hasPreview, setHasPreview] = useState<boolean | null>(null);
+  const [buildProgress, setBuildProgress] = useState<number | null>(null);
+  const [showCodePanel, setShowCodePanel] = useState(true);
+
+  function coerceOfflineMeta(meta: unknown): { offline: boolean; reason?: string } | null {
+    if (!meta || typeof meta !== "object") return null;
+    const m = meta as any;
+    if (typeof m.offline !== "boolean") return null;
+    const reason = typeof m.reason === "string" && m.reason.trim() ? m.reason.trim() : undefined;
+    return { offline: m.offline, reason };
+  }
+
+  const checkPreviewAvailable = useCallback(async (candidateUrl: string): Promise<boolean> => {
+    try {
+      // Prefer HEAD to avoid fetching full HTML.
+      const head = await fetch(candidateUrl, { method: "HEAD", cache: "no-store" });
+      if (head.ok) return true;
+      if (head.status !== 405) return false;
+    } catch {
+      // Fall through to GET as a best-effort.
+    }
+
+    try {
+      const resp = await fetch(candidateUrl, { method: "GET", cache: "no-store" });
+      return resp.ok;
+    } catch {
+      return false;
+    }
+  }, []);
 
   const redirectToPricing = useCallback(() => {
     // HashRouter: route to landing (/) and include a query that Landing will use to scroll.
     // Results in: /app/#/?scroll=pricing
     window.location.hash = "/?scroll=pricing";
+  }, []);
+
+  const refreshUsageStatus = useCallback(async () => {
+    try {
+      const token = api.getAccessToken();
+      const status = await api.getUsageStatus(token);
+      setUsageStatus(status);
+    } catch {
+      // Non-fatal: usage metering is optional for UI.
+    }
   }, []);
 
   async function doDownloadZip(token: string) {
@@ -72,7 +141,10 @@ export default function Workspace() {
       setDownloadStatus("Download started");
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      if (message.includes("HTTP 401")) {
+      const status = parseHttpStatusFromError(error);
+      if (status === 429) {
+        setDownloadStatus(rateLimitHint(error));
+      } else if (message.includes("HTTP 401")) {
         setDownloadStatus("Registration required to download. Redirecting to Pricing…");
         redirectToPricing();
       } else if (message.includes("HTTP 402")) {
@@ -125,11 +197,55 @@ export default function Workspace() {
     };
   }, []);
 
+  // Refresh usage status periodically.
+  useEffect(() => {
+    if (!document.hidden) {
+      void refreshUsageStatus();
+    }
+
+    const onVisibility = () => {
+      if (!document.hidden) {
+        void refreshUsageStatus();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    const id = window.setInterval(() => {
+      if (document.hidden) return;
+      void refreshUsageStatus();
+    }, 60_000);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.clearInterval(id);
+    };
+  }, [refreshUsageStatus]);
+
   // Keep preview URL aligned when project changes.
   useEffect(() => {
     if (!projectId) return;
     setPreviewUrl(api.previewUrl(projectId));
   }, [projectId]);
+
+  // Determine whether the preview is actually built for this project.
+  useEffect(() => {
+    if (!projectId) {
+      setHasPreview(null);
+      return;
+    }
+    let cancelled = false;
+    setHasPreview(null);
+
+    (async () => {
+      const url = api.previewUrl(projectId);
+      const ok = await checkPreviewAvailable(url);
+      if (!cancelled) setHasPreview(ok);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId, checkPreviewAvailable]);
 
   // Load persisted chat history when project changes.
   useEffect(() => {
@@ -200,9 +316,12 @@ export default function Workspace() {
 
     setIsBusy(true);
     setStreamUrl(null);
+    setHasPreview(null);
 
     try {
       const planResponse = await api.plan(goal.trim());
+      const offline = coerceOfflineMeta((planResponse as any)?.meta);
+      setAiOffline(offline && offline.offline ? offline : null);
       const routeCount = (planResponse.blueprint as any)?.routes?.length ?? 0;
       setBlueprintMeta(`Blueprint ready (routes: ${routeCount})`);
 
@@ -216,6 +335,7 @@ export default function Workspace() {
 
       const filesResponse = await api.generateFiles(planResponse.blueprint, PROJECT_NAME);
       setFiles(filesResponse.files);
+      setShowCodePanel(true);
 
       // Persist generated file tree/content for this project (best-effort).
       try {
@@ -229,9 +349,19 @@ export default function Workspace() {
       const url = api.buildStreamUrl(projectId, true);
       setStreamUrl(url);
       setBlueprintMeta("Building preview…");
+      void refreshUsageStatus();
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      setBlueprintMeta(`Error: ${message}`);
+      const status = parseHttpStatusFromError(error);
+      if (status === 429) {
+        setBlueprintMeta(rateLimitHint(error));
+      } else if (message.includes("HTTP 402")) {
+        setBlueprintMeta("AI credits exhausted. Redirecting to Pricing…");
+        redirectToPricing();
+      } else {
+        setBlueprintMeta(`Error: ${message}`);
+      }
+      void refreshUsageStatus();
     } finally {
       setIsBusy(false);
     }
@@ -244,6 +374,9 @@ export default function Workspace() {
     setFiles([]);
     setBlueprintMeta(null);
     setStreamUrl(null);
+    setAiOffline(null);
+    setHasPreview(null);
+    setShowCodePanel(true);
     const nextPreviewUrl = api.previewUrl(id);
     setPreviewUrl(nextPreviewUrl);
     setDownloadStatus(null);
@@ -319,6 +452,10 @@ export default function Workspace() {
 
   function handlePreviewClick() {
     if (!previewUrl) return;
+    if (hasPreview !== true) {
+      setBlueprintMeta("No preview yet. Click Generate to build it.");
+      return;
+    }
     window.open(previewUrl, "_blank", "noopener,noreferrer");
   }
 
@@ -331,10 +468,74 @@ export default function Workspace() {
     setDraft("");
     try {
       const resp = await api.projectChat(projectId, text);
+      const offline = coerceOfflineMeta((resp as any)?.meta);
+      setAiOffline(offline && offline.offline ? offline : null);
       setChatMessages((prev) => [...prev, { role: "assistant", content: resp.reply }]);
+      void refreshUsageStatus();
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      setChatMessages((prev) => [...prev, { role: "assistant", content: `Error: ${message}` }]);
+      const status = parseHttpStatusFromError(error);
+      if (status === 429) {
+        setChatMessages((prev) => [...prev, { role: "assistant", content: rateLimitHint(error) }]);
+      } else if (status === 402) {
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: "AI credits exhausted. Please upgrade in Pricing to continue.",
+          },
+        ]);
+        redirectToPricing();
+      } else {
+        setChatMessages((prev) => [...prev, { role: "assistant", content: `Error: ${message}` }]);
+      }
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function handleUpdate() {
+    const instruction = goal.trim();
+    if (!instruction || !projectId) return;
+
+    setIsBusy(true);
+    setStreamUrl(null);
+    setHasPreview(null);
+    setBlueprintMeta("Updating app…");
+
+    try {
+      const resp = await api.patchProject(projectId, instruction, PROJECT_NAME);
+      const offline = coerceOfflineMeta((resp as any)?.meta);
+      setAiOffline(offline && offline.offline ? offline : null);
+      const changedCount = Array.isArray(resp.changed_paths) ? resp.changed_paths.length : 0;
+      const removedCount = Array.isArray(resp.removed_paths) ? resp.removed_paths.length : 0;
+      setBlueprintMeta(`Updated (${changedCount} changed, ${removedCount} removed). Building preview…`);
+
+      // Reload persisted files after patch so the file viewer stays in sync.
+      try {
+        const nextFiles = await api.getProjectFiles(projectId);
+        if (Array.isArray(nextFiles.files)) {
+          setFiles(nextFiles.files);
+        }
+      } catch {
+        // Non-fatal: patch/build can still proceed.
+      }
+
+      const url = api.buildStreamUrl(projectId, false);
+      setStreamUrl(url);
+      void refreshUsageStatus();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const status = parseHttpStatusFromError(error);
+      if (status === 429) {
+        setBlueprintMeta(rateLimitHint(error));
+      } else if (message.includes("HTTP 402")) {
+        setBlueprintMeta("AI credits exhausted. Redirecting to Pricing…");
+        redirectToPricing();
+      } else {
+        setBlueprintMeta(`Update error: ${message}`);
+      }
+      void refreshUsageStatus();
     } finally {
       setIsBusy(false);
     }
@@ -347,6 +548,7 @@ export default function Workspace() {
       : api.previewUrl(projectId);
     const next = `${candidate}${candidate.includes("?") ? "&" : "?"}t=${Date.now()}`;
     setPreviewUrl(next);
+    setHasPreview(true);
   }, [projectId]);
 
   // Consume the build stream in the background so we can keep a clean 2-pane UI.
@@ -355,10 +557,28 @@ export default function Workspace() {
 
     const source = new EventSource(streamUrl);
 
+    // Simple progress: ticks up while streaming, hits 100% on done.
+    setBuildProgress(0);
+    const tick = window.setInterval(() => {
+      setBuildProgress((prev) => {
+        const current = typeof prev === "number" ? prev : 0;
+        if (current >= 95) return current;
+        // Slow ramp to avoid jumping too quickly.
+        const next = current < 30 ? current + 2 : current < 70 ? current + 1 : current + 0.5;
+        return Math.min(95, Math.round(next));
+      });
+    }, 350);
+
     source.addEventListener("status", (event) => {
       const data = (event as MessageEvent).data;
       if (typeof data === "string" && data && data !== "ping") {
         setBlueprintMeta(String(data));
+
+        const lower = data.toLowerCase();
+        // Best-effort nudges based on common log text.
+        if (lower.includes("install")) setBuildProgress((p) => (p == null ? 15 : Math.max(p, 15)));
+        if (lower.includes("build")) setBuildProgress((p) => (p == null ? 45 : Math.max(p, 45)));
+        if (lower.includes("bundle") || lower.includes("vite")) setBuildProgress((p) => (p == null ? 70 : Math.max(p, 70)));
       }
     });
 
@@ -366,26 +586,77 @@ export default function Workspace() {
       const data = (event as MessageEvent).data;
       handleBuildDone(typeof data === "string" ? data : undefined);
       setBlueprintMeta("Preview ready");
+      setBuildProgress(100);
       source.close();
-      setStreamUrl(null);
+      window.clearInterval(tick);
+      // Keep 100% visible briefly.
+      window.setTimeout(() => {
+        setStreamUrl(null);
+        setBuildProgress(null);
+      }, 600);
     });
 
     source.addEventListener("error", (event) => {
       const message = (event as MessageEvent).data || "Build stream error";
       setBlueprintMeta(`Error: ${String(message)}`);
       source.close();
+      window.clearInterval(tick);
+      setBuildProgress(null);
       setStreamUrl(null);
     });
 
-    return () => source.close();
+    return () => {
+      window.clearInterval(tick);
+      source.close();
+      setBuildProgress(null);
+    };
   }, [streamUrl, handleBuildDone]);
 
-  const subtitleText = blueprintMeta ?? (isBusy ? "Builder is thinking…" : "Describe what you want to build.");
-  const hintText = downloadStatus ?? "Shift+Enter for a new line. Generate to refresh the preview.";
+  const subtitleText =
+    blueprintMeta ??
+    (!projectId
+      ? "Creating project…"
+      : isBusy
+        ? "Builder is thinking…"
+        : typeof buildProgress === "number" && streamUrl
+          ? `Building preview… ${buildProgress}%`
+        : hasPreview === false
+          ? "No preview yet. Click Generate to build it."
+          : files.length === 0
+            ? "No files yet. Describe what you want to build."
+            : "Describe what you want to build.");
+  const hintText =
+    downloadStatus ??
+    (!projectId
+      ? "Creating project…"
+      : hasPreview === false
+        ? "No preview yet. Click Generate to create your first build."
+        : "Shift+Enter for a new line. Generate to refresh the preview.");
   const disableSend = !draft.trim() || !projectId || isBusy;
   const disableGenerate = !projectId || !goal.trim() || isBusy;
+  const disableUpdate = !projectId || !goal.trim() || isBusy;
   const disableDownload = !projectId || isBusy;
-  const disablePreview = !previewUrl;
+  const disablePreview = !previewUrl || hasPreview !== true;
+
+  const codePanelTitle = files.length > 0 ? `Generated code (${files.length} files)` : "Generated code";
+
+  const usageText = useMemo(() => {
+    if (!usageStatus) return null;
+
+    const t = String(usageStatus.plan_tier || "").toLowerCase();
+    const planLabel =
+      t === "trial" ? "Trial" :
+      t === "trial_expired" ? "Trial ended" :
+      t === "student" ? "Student" :
+      t === "pro" ? "Pro" :
+      t === "enterprise" ? "Enterprise" :
+      (usageStatus.plan_tier || "Plan");
+
+    const used = Number(usageStatus.credits_used ?? 0);
+    const limit = Number(usageStatus.credits_limit ?? 0);
+    if (limit > 0) return `Plan: ${planLabel} · AI Credits: ${used}/${limit}`;
+    return `Plan: ${planLabel} · AI Credits: ${used}`;
+  }, [usageStatus]);
 
   return (
     <div className="chatLayoutScreen">
@@ -418,8 +689,8 @@ export default function Workspace() {
           <div className="threadList">
             {filteredProjects.length === 0 ? (
               <div className="thread">
-                <div className="threadTitle">No matches</div>
-                <div className="threadMeta">Adjust your search.</div>
+                <div className="threadTitle">{threadQuery.trim() ? "No matches" : "No projects yet"}</div>
+                <div className="threadMeta">{threadQuery.trim() ? "Adjust your search." : "Click + New chat to start."}</div>
               </div>
             ) : (
               filteredProjects.map((project) => (
@@ -482,11 +753,25 @@ export default function Workspace() {
               <div className="subtitle">{subtitleText}</div>
             </div>
             <div className="topbarRight">
+              {usageText ? <div className="usagePill">{usageText}</div> : null}
+              {typeof buildProgress === "number" && streamUrl ? (
+                <div className="usagePill" aria-label="Build progress">
+                  Build: {buildProgress}%
+                </div>
+              ) : null}
+              {aiOffline?.offline ? (
+                <div className="usagePill" title={aiOffline.reason || "AI is temporarily unavailable"}>
+                  AI: offline fallback
+                </div>
+              ) : null}
               <button className="ghostBtn" onClick={handlePreviewClick} disabled={disablePreview}>
                 Open preview
               </button>
               <button className="ghostBtn" onClick={() => void handleDownloadClick()} disabled={disableDownload}>
                 Download
+              </button>
+              <button className="ghostBtn" onClick={() => void handleUpdate()} disabled={disableUpdate}>
+                Update
               </button>
               <button className="ghostBtn" onClick={() => void handleGenerate()} disabled={disableGenerate}>
                 {isBusy ? "Working…" : "Generate"}
@@ -495,15 +780,112 @@ export default function Workspace() {
           </header>
 
           <section className="chatArea">
-            <div className="messages">
-              {chatMessages.map((message, index) => (
-                <div key={`${message.role}-${index}`} className={`row ${message.role === "user" ? "me" : "bot"}`}>
-                  <div className="bubble">
-                    <div className="role">{message.role === "user" ? "You" : "Assistant"}</div>
-                    <div className="text">{message.content}</div>
+            <div style={{ display: "flex", gap: 16, height: "100%", flexWrap: "wrap" }}>
+              <div style={{ flex: "2 1 520px", minWidth: 280, display: "flex", flexDirection: "column" }}>
+                <div className="messages">
+                  {chatMessages.map((message, index) => (
+                    <div key={`${message.role}-${index}`} className={`row ${message.role === "user" ? "me" : "bot"}`}>
+                      <div className="bubble">
+                        <div className="role">{message.role === "user" ? "You" : "Assistant"}</div>
+                        <div className="text">{message.content}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {showCodePanel ? (
+                <div
+                  style={{
+                    flex: "1 1 420px",
+                    minWidth: 280,
+                    border: "1px solid var(--border)",
+                    borderRadius: 18,
+                    background: "rgba(255, 255, 255, 0.03)",
+                    overflow: "hidden",
+                    display: "flex",
+                    flexDirection: "column",
+                    minHeight: 240,
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: "12px 14px",
+                      borderBottom: "1px solid var(--border)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 12,
+                    }}
+                  >
+                    <div style={{ fontWeight: 600 }}>{codePanelTitle}</div>
+                    <button
+                      type="button"
+                      className="ghostBtn"
+                      onClick={() => setShowCodePanel(false)}
+                      style={{ padding: "6px 10px", fontSize: 12 }}
+                    >
+                      Hide
+                    </button>
+                  </div>
+
+                  <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 10, minHeight: 0 }}>
+                    {files.length > 0 ? (
+                      <select
+                        value={selectedPath || files[0]?.path || ""}
+                        onChange={(e) => setSelectedPath(e.target.value)}
+                        style={{
+                          width: "100%",
+                          borderRadius: 12,
+                          border: "1px solid var(--border)",
+                          background: "rgba(255, 255, 255, 0.04)",
+                          padding: "10px 12px",
+                          fontSize: 13,
+                        }}
+                      >
+                        {files.map((f) => (
+                          <option key={f.path} value={f.path}>
+                            {f.path}
+                          </option>
+                        ))}
+                      </select>
+                    ) : null}
+
+                    {files.length === 0 ? (
+                      <div style={{ color: "var(--muted)", fontSize: 13, lineHeight: 1.4 }}>
+                        {isBusy
+                          ? "Generating files…"
+                          : "Click Generate to create files. The code will appear here."}
+                      </div>
+                    ) : (
+                      <pre
+                        style={{
+                          margin: 0,
+                          padding: 12,
+                          borderRadius: 14,
+                          border: "1px solid rgba(255, 255, 255, 0.10)",
+                          background: "rgba(0, 0, 0, 0.25)",
+                          color: "var(--text)",
+                          fontSize: 12,
+                          lineHeight: 1.5,
+                          overflow: "auto",
+                          minHeight: 0,
+                          flex: 1,
+                          whiteSpace: "pre",
+                        }}
+                      >
+                        {(selectedFile?.content ?? files[0]?.content ?? "") || ""}
+                      </pre>
+                    )}
                   </div>
                 </div>
-              ))}
+              ) : (
+                <div style={{ flex: "1 1 200px", minWidth: 200, alignSelf: "flex-start" }}>
+                  <button className="ghostBtn" type="button" onClick={() => setShowCodePanel(true)}>
+                    Show code
+                  </button>
+                </div>
+              )}
             </div>
           </section>
 

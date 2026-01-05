@@ -155,7 +155,10 @@
 
       <div class="card">
         <h1>Subscribe</h1>
-        <p>Create your account and choose a plan. After payment, you’ll be able to download ZIP exports.</p>
+        <p>
+          Create your account and choose a plan. Every new account starts with a free trial (10 AI credits / 14 days).
+          After payment, you’ll also be able to download ZIP exports.
+        </p>
 
         <div class="grid" style="margin-top: 14px">
           <div>
@@ -170,8 +173,8 @@
           <div>
             <label for="plan">Plan</label>
             <select id="plan">
-              <option value="student">Student</option>
-              <option value="pro" selected>Pro</option>
+              <option value="student">Student (50 AI credits/month)</option>
+              <option value="pro" selected>Pro (300 AI credits/month)</option>
             </select>
           </div>
           <div>
@@ -189,7 +192,10 @@
         </div>
 
         <div id="status" class="status"></div>
-        <div class="tiny">Already paid? After Stripe redirects back, this page will show confirmation.</div>
+        <div class="tiny">
+          AI credits reset monthly. Trial: 10 credits over 14 days. Student: 50 credits/month. Pro: 300 credits/month.
+          Already paid? After Stripe redirects back, this page will show confirmation.
+        </div>
       </div>
     </div>
 

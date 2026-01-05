@@ -12,8 +12,8 @@ class Branding(BaseModel):
 
 class Theme(BaseModel):
     style: Literal['modern', 'minimal', 'playful', 'corporate', 'bold'] = 'modern'
-    primary_color: Optional[str] = Field(None, description='Hex color like #2563EB')
-    font_family: Optional[str] = Field(None, description='e.g., Inter, Poppins')
+    primary_color: Optional[str] = Field(default=None, description='Hex color like #2563EB')
+    font_family: Optional[str] = Field(default=None, description='e.g., Inter, Poppins')
 
 
 class Route(BaseModel):

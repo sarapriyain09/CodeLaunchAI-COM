@@ -10,6 +10,8 @@
 # Generated workspaces/output
 backend/orchestrator/generated_workspaces/
 workspace/
+generated_workspaces/
+generated/
 
 # Env files (never commit secrets)
 **/.env

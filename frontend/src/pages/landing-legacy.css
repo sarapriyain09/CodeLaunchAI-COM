@@ -175,6 +175,7 @@
 .landing-legacy .feature-grid,
 .landing-legacy .steps-grid,
 .landing-legacy .testimonials,
+.landing-legacy .examples-grid,
 .landing-legacy .pricing-grid,
 .landing-legacy .policy-grid {
   display: grid;

@@ -26,5 +26,7 @@ async def create_plan(body: PlanRequest) -> PlanResponse:
     try:
         blueprint, debug = await plan_blueprint(body.goal, body.context)
         return PlanResponse(blueprint=blueprint, meta=debug)
+    except HTTPException:
+        raise
     except Exception as error:  # pragma: no cover - surface failure for MVP
         raise HTTPException(status_code=400, detail=f'Failed to generate blueprint: {error}') from error

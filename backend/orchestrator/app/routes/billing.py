@@ -165,6 +165,12 @@ def create_checkout_session(request: Request, payload: CheckoutSessionRequest | 
             mode="subscription",
             client_reference_id=user.id,
             customer_email=user.email,
+            subscription_data={
+                "metadata": {
+                    "plan": _normalize_plan(effective.plan),
+                    "interval": _normalize_interval(effective.interval),
+                }
+            },
             line_items=[{"price": price_id, "quantity": 1}],
             success_url=success_url,
             cancel_url=cancel_url,
@@ -203,6 +209,9 @@ async def stripe_webhook(request: Request):
         customer_id = (data_obj.get("customer") or "").strip()
         status = data_obj.get("status")
         current_period_end = data_obj.get("current_period_end")
+        meta = data_obj.get("metadata") if isinstance(data_obj, dict) else None
+        plan = meta.get("plan") if isinstance(meta, dict) else None
+        interval = meta.get("interval") if isinstance(meta, dict) else None
 
         user = find_user_by_stripe_customer_id(customer_id)
         if user and user.get("id"):
@@ -210,6 +219,8 @@ async def stripe_webhook(request: Request):
                 user_id=str(user["id"]),
                 status=str(status) if status is not None else None,
                 current_period_end=int(current_period_end) if isinstance(current_period_end, int) else None,
+                plan=str(plan) if isinstance(plan, str) else None,
+                interval=str(interval) if isinstance(interval, str) else None,
             )
 
     return {"ok": True}
