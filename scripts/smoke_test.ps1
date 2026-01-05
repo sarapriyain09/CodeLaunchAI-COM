@@ -7,6 +7,21 @@ param(
   # Optional separate frontend host (e.g., https://www.codelaunchai.com).
   [Parameter(Mandatory=$false)]
   [string]$FrontendUrl = ""
+
+  ,
+  # Optional deeper checks that exercise the builder API flow:
+  # create project -> plan -> state -> generate -> files -> materialize.
+  [Parameter(Mandatory=$false)]
+  [switch]$BuilderFlow,
+
+  # If set with -BuilderFlow, also triggers a full Vite build on the backend.
+  # This can be slow and resource intensive; use sparingly in prod.
+  [Parameter(Mandatory=$false)]
+  [switch]$BuildPreview,
+
+  # If set, keeps the created smoke-test project instead of deleting it.
+  [Parameter(Mandatory=$false)]
+  [switch]$KeepProject
 )
 
 $ErrorActionPreference = 'Stop'
@@ -61,6 +76,9 @@ $base = $BackendUrl.TrimEnd('/')
 $frontend = $FrontendUrl.TrimEnd('/')
 $allOk = $true
 $warn = 0
+
+$blueprint = $null
+$planMeta = $null
 
 # 1) /health
 $r = Try-Request { Invoke-WebRequest -UseBasicParsing ("$base/health") }
@@ -124,6 +142,14 @@ $r5 = Try-Request {
 }
 if ($r5.ok) {
   $allOk = (Assert-Status "POST /plan" $r5.value.StatusCode @(200)) -and $allOk
+  try {
+    $pj = $r5.value.Content | ConvertFrom-Json
+    $blueprint = $pj.blueprint
+    $planMeta = $pj.meta
+  } catch {
+    # Non-fatal; builder flow may be skipped.
+    $blueprint = $null
+  }
 } else {
   if ($r5.error -match "\(402\)") {
     Write-Host "WARN: POST /plan credits-gated (402)"
@@ -131,6 +157,137 @@ if ($r5.ok) {
   } else {
     Write-Result "POST /plan" $false $r5.error
     $allOk = $false
+  }
+}
+
+if ($BuilderFlow.IsPresent) {
+  Write-Host "INFO: Running builder flow checks..."
+
+  if ($null -eq $blueprint) {
+    Write-Host "WARN: Skipping builder flow: no blueprint available (plan failed or parsing failed)."
+    $warn++
+  } else {
+    $projectId = $null
+
+    # Create a smoke-test project
+    $name = "SmokeTest " + (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+    $createBody = @{ name = $name; project_id = $null } | ConvertTo-Json -Depth 6
+    $rP = Try-Request {
+      Invoke-WebRequest -UseBasicParsing -Method Post ("$base/projects") -ContentType 'application/json' -Body $createBody
+    }
+    if ($rP.ok) {
+      $allOk = (Assert-Status "POST /projects" $rP.value.StatusCode @(200)) -and $allOk
+      try {
+        $p = $rP.value.Content | ConvertFrom-Json
+        $projectId = $p.id
+      } catch {
+        $projectId = $null
+      }
+    } else {
+      Write-Result "POST /projects" $false $rP.error
+      $allOk = $false
+    }
+
+    if ($projectId) {
+      # GET project
+      $rPg = Try-Request { Invoke-WebRequest -UseBasicParsing ("$base/projects/$projectId") }
+      if ($rPg.ok) {
+        $allOk = (Assert-Status "GET /projects/{id}" $rPg.value.StatusCode @(200)) -and $allOk
+      } else {
+        Write-Result "GET /projects/{id}" $false $rPg.error
+        $allOk = $false
+      }
+
+      # Persist state (blueprint + plan meta)
+      $stateBody = @{ blueprint = $blueprint; plan = @{ goal = "smoke"; meta = $planMeta } } | ConvertTo-Json -Depth 100
+      $rState = Try-Request {
+        Invoke-WebRequest -UseBasicParsing -Method Put ("$base/projects/$projectId/state") -ContentType 'application/json' -Body $stateBody
+      }
+      if ($rState.ok) {
+        $allOk = (Assert-Status "PUT /projects/{id}/state" $rState.value.StatusCode @(200)) -and $allOk
+      } else {
+        Write-Result "PUT /projects/{id}/state" $false $rState.error
+        $allOk = $false
+      }
+
+      # Generate files
+      $genBody = @{ blueprint = $blueprint; project_name = 'generated-app' } | ConvertTo-Json -Depth 100
+      $rGen = Try-Request {
+        Invoke-WebRequest -UseBasicParsing -Method Post ("$base/generate") -ContentType 'application/json' -Body $genBody
+      }
+
+      $files = @()
+      if ($rGen.ok) {
+        $allOk = (Assert-Status "POST /generate" $rGen.value.StatusCode @(200)) -and $allOk
+        try {
+          $gj = $rGen.value.Content | ConvertFrom-Json
+          $files = @($gj.files)
+        } catch {
+          $files = @()
+        }
+      } else {
+        if ($rGen.error -match "\(402\)") {
+          Write-Host "WARN: POST /generate credits-gated (402)"
+          $warn++
+        } else {
+          Write-Result "POST /generate" $false $rGen.error
+          $allOk = $false
+        }
+      }
+
+      # Persist a small subset of files (best-effort) to validate the endpoint
+      if ($files.Count -gt 0) {
+        $subset = @($files | Select-Object -First 25)
+        $filesBody = @{ files = $subset } | ConvertTo-Json -Depth 100
+        $rFiles = Try-Request {
+          Invoke-WebRequest -UseBasicParsing -Method Put ("$base/projects/$projectId/files") -ContentType 'application/json' -Body $filesBody
+        }
+        if ($rFiles.ok) {
+          $allOk = (Assert-Status "PUT /projects/{id}/files" $rFiles.value.StatusCode @(200)) -and $allOk
+        } else {
+          Write-Host ("WARN: PUT /projects/{id}/files failed: {0}" -f $rFiles.error)
+          $warn++
+        }
+      }
+
+      # Materialize workspace (writes the on-disk workspace)
+      $matBody = @{ blueprint = $blueprint; project_name = 'generated-app' } | ConvertTo-Json -Depth 100
+      $rMat = Try-Request {
+        Invoke-WebRequest -UseBasicParsing -Method Post ("$base/projects/$projectId/materialize") -ContentType 'application/json' -Body $matBody
+      }
+      if ($rMat.ok) {
+        $allOk = (Assert-Status "POST /projects/{id}/materialize" $rMat.value.StatusCode @(200)) -and $allOk
+      } else {
+        Write-Result "POST /projects/{id}/materialize" $false $rMat.error
+        $allOk = $false
+      }
+
+      if ($BuildPreview.IsPresent) {
+        Write-Host "INFO: Building preview (this can take a while)..."
+        $rBuild = Try-Request {
+          Invoke-WebRequest -UseBasicParsing -Method Post ("$base/projects/$projectId/build") -ContentType 'application/json' -TimeoutSec 600 -Body "{}"
+        }
+        if ($rBuild.ok) {
+          $allOk = (Assert-Status "POST /projects/{id}/build" $rBuild.value.StatusCode @(200)) -and $allOk
+        } else {
+          Write-Host ("WARN: POST /projects/{id}/build failed: {0}" -f $rBuild.error)
+          $warn++
+        }
+      }
+
+      # Cleanup
+      if (-not $KeepProject.IsPresent) {
+        $rDel = Try-Request { Invoke-WebRequest -UseBasicParsing -Method Delete ("$base/projects/$projectId") }
+        if ($rDel.ok) {
+          $allOk = (Assert-Status "DELETE /projects/{id}" $rDel.value.StatusCode @(200)) -and $allOk
+        } else {
+          Write-Host ("WARN: DELETE /projects/{id} failed: {0}" -f $rDel.error)
+          $warn++
+        }
+      } else {
+        Write-Host ("INFO: KeepProject set; leaving smoke project id={0}" -f $projectId)
+      }
+    }
   }
 }
 
