@@ -54,7 +54,7 @@ def usage_limits_enabled() -> bool:
 def monthly_credit_limit(*, plan_tier: str) -> int:
     tier = (plan_tier or "student").strip().lower()
     if tier in {"trial", "free"}:
-        raw = os.getenv("TRIAL_MONTHLY_CREDITS", "10")
+        raw = os.getenv("TRIAL_MONTHLY_CREDITS", "50")
     elif tier in {"trial_expired", "expired"}:
         raw = os.getenv("TRIAL_EXPIRED_MONTHLY_CREDITS", "0")
     elif tier == "enterprise":

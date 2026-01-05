@@ -109,17 +109,34 @@ export default function Workspace() {
     }
   }, []);
 
-  const redirectToPricing = useCallback(() => {
-    // HashRouter: route to landing (/) and include a query that Landing will use to scroll.
-    // Results in: /app/#/?scroll=pricing
-    window.location.hash = "/?scroll=pricing";
+  const redirectToFrontPage = useCallback(() => {
+    // Public front page (outside HashRouter).
+    window.location.href = "/";
   }, []);
 
-  const redirectToSubscribe = useCallback(() => {
-    // Public subscribe page (served from the site root).
-    // Keep this outside HashRouter so it works even when the app is hosted under /app/.
-    window.location.href = "/subscribe.html";
-  }, []);
+  const showDownloadGatedPopup = useCallback(() => {
+    // Minimal “popup” per request.
+    window.alert(
+      "Downloads require a paid subscription.\n\nPlease close this window and subscribe from the homepage.",
+    );
+
+    // If this page is opened as a popup, try to redirect the opener and close.
+    try {
+      if (window.opener && !window.opener.closed) {
+        try {
+          window.opener.location.href = "/";
+        } catch {
+          // Ignore cross-origin / browser restrictions.
+        }
+        window.close();
+        return;
+      }
+    } catch {
+      // Ignore.
+    }
+
+    redirectToFrontPage();
+  }, [redirectToFrontPage]);
 
   const refreshUsageStatus = useCallback(async () => {
     try {
@@ -150,12 +167,9 @@ export default function Workspace() {
       const status = parseHttpStatusFromError(error);
       if (status === 429) {
         setDownloadStatus(rateLimitHint(error));
-      } else if (message.includes("HTTP 401")) {
-        setDownloadStatus("Subscription required to download. Redirecting to Subscribe…");
-        redirectToSubscribe();
-      } else if (message.includes("HTTP 402")) {
-        setDownloadStatus("Subscription required to download. Redirecting to Subscribe…");
-        redirectToSubscribe();
+      } else if (message.includes("HTTP 401") || message.includes("HTTP 402")) {
+        setDownloadStatus("Subscription required to download.");
+        showDownloadGatedPopup();
       } else {
         setDownloadStatus(`Download error: ${message}`);
       }
@@ -361,9 +375,10 @@ export default function Workspace() {
       const status = parseHttpStatusFromError(error);
       if (status === 429) {
         setBlueprintMeta(rateLimitHint(error));
-      } else if (message.includes("HTTP 402")) {
-        setBlueprintMeta("AI credits exhausted. Redirecting to Pricing…");
-        redirectToPricing();
+      } else if (status === 402 || message.includes("HTTP 402")) {
+        setBlueprintMeta(
+          "Trial AI credits exhausted. Please wait for the next month or subscribe from the homepage to continue.",
+        );
       } else {
         setBlueprintMeta(`Error: ${message}`);
       }
@@ -449,8 +464,8 @@ export default function Workspace() {
     setDownloadStatus(null);
     const token = api.getAccessToken();
     if (!token) {
-      setDownloadStatus("Subscription required to download. Redirecting to Subscribe…");
-      redirectToSubscribe();
+      setDownloadStatus("Subscription required to download.");
+      showDownloadGatedPopup();
       return;
     }
     await doDownloadZip(token);
@@ -488,10 +503,10 @@ export default function Workspace() {
           ...prev,
           {
             role: "assistant",
-            content: "AI credits exhausted. Please upgrade in Pricing to continue.",
+            content:
+              "Trial AI credits exhausted. Please wait for the next month or subscribe from the homepage to continue.",
           },
         ]);
-        redirectToPricing();
       } else {
         setChatMessages((prev) => [...prev, { role: "assistant", content: `Error: ${message}` }]);
       }
@@ -535,9 +550,10 @@ export default function Workspace() {
       const status = parseHttpStatusFromError(error);
       if (status === 429) {
         setBlueprintMeta(rateLimitHint(error));
-      } else if (message.includes("HTTP 402")) {
-        setBlueprintMeta("AI credits exhausted. Redirecting to Pricing…");
-        redirectToPricing();
+      } else if (status === 402 || message.includes("HTTP 402")) {
+        setBlueprintMeta(
+          "Trial AI credits exhausted. Please wait for the next month or subscribe from the homepage to continue.",
+        );
       } else {
         setBlueprintMeta(`Update error: ${message}`);
       }
