@@ -1,6 +1,6 @@
 {
-  "name": "CodeLaunchAI",
-  "short_name": "CodeLaunchAI",
+  "name": "Codlearn",
+  "short_name": "Codlearn",
   "start_url": "/app/",
   "scope": "/app/",
   "display": "standalone",
