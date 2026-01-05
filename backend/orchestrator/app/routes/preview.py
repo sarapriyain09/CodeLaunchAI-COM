@@ -16,7 +16,7 @@ from app.services.generator import generate_vite_react_project
 from app.services.materializer import ensure_gitignore, write_file_tree
 from app.services.builder import BuildError, clean_dist, npm_build, npm_install_if_needed
 from app.services.stream_runner import (
-    node_modules_exists,
+    node_modules_ready_for_build,
     stream_npm_build,
     stream_npm_install,
 )
@@ -207,7 +207,7 @@ async def build_stream(project_id: str, install: bool = True):
                 yield ping
 
             if install:
-                if node_modules_exists(workspace):
+                if node_modules_ready_for_build(workspace):
                     yield sse_event('log', 'node_modules exists. Skipping npm install.')
                 else:
                     for line in stream_npm_install(workspace):

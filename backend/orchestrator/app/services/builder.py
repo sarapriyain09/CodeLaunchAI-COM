@@ -5,6 +5,7 @@ import subprocess
 from pathlib import Path
 
 from app.config import NPM_CMD
+from app.services.stream_runner import node_modules_ready_for_build
 
 
 class BuildError(RuntimeError):
@@ -27,9 +28,11 @@ def _run_command(cmd: list[str], cwd: Path) -> str:
 
 
 def npm_install_if_needed(workspace: Path) -> str:
-    if (workspace / 'node_modules').exists():
+    if node_modules_ready_for_build(workspace):
         return 'node_modules already exists; skipped install.'
-    return _run_command([NPM_CMD, 'install'], workspace)
+    if (workspace / 'node_modules').exists():
+        return _run_command([NPM_CMD, 'install', '--include=dev'], workspace)
+    return _run_command([NPM_CMD, 'install', '--include=dev'], workspace)
 
 
 def npm_build(workspace: Path) -> str:

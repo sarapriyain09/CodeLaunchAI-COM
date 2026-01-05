@@ -34,7 +34,10 @@ def _popen(cmd: List[str], cwd: Path) -> subprocess.Popen:
 
 def stream_npm_install(workspace: Path) -> Iterator[str]:
     yield 'Starting npm install...\n'
-    process = _popen([NPM_CMD, 'install'], workspace)
+    # Some production environments set NODE_ENV=production / npm_config_production=true,
+    # which causes `npm install` to omit devDependencies. Our generated Vite+TS projects
+    # need devDependencies (notably `vite`) for `tsc -b` to resolve `vite/client`.
+    process = _popen([NPM_CMD, 'install', '--include=dev'], workspace)
     assert process.stdout is not None
     tail: list[str] = []
     for line in process.stdout:
@@ -66,3 +69,12 @@ def stream_npm_build(workspace: Path) -> Iterator[str]:
 
 def node_modules_exists(workspace: Path) -> bool:
     return (workspace / 'node_modules').exists()
+
+
+def has_vite_client_types(workspace: Path) -> bool:
+    # TypeScript resolves `vite/client` from node_modules/vite/client.d.ts.
+    return (workspace / 'node_modules' / 'vite' / 'client.d.ts').exists()
+
+
+def node_modules_ready_for_build(workspace: Path) -> bool:
+    return node_modules_exists(workspace) and has_vite_client_types(workspace)
