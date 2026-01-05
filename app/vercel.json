@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/__rewrite_test",
+      "destination": "https://codelaunchai-com-1.onrender.com/health"
+    },
+    {
+      "source": "/app/:path*",
+      "destination": "/:path*"
+    },
+    {
       "source": "/preview/:path*",
       "destination": "https://codelaunchai-com-1.onrender.com/preview/:path*"
     },
