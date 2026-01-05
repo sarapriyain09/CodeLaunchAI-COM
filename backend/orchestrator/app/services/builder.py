@@ -22,9 +22,24 @@ def ensure_preview_router_basename(workspace: Path) -> None:
     except Exception:
         return
 
-    # Only patch the common template shape: BrowserRouter without basename.
     if 'BrowserRouter' not in text:
         return
+
+    # If the file already has a helper, make sure it matches all preview mounts.
+    # Older generated projects only matched /preview/{id} and would show "Page not found"
+    # when hosted under /previews/{id}.
+    if 'getRouterBasename' in text and '/preview/[^/]+' in text:
+        text = text.replace(
+            r"path.match(/^\/preview\/[^/]+/)",
+            r"path.match(/^\/(?:preview|previews|p)\/[^/]+/)",
+        )
+        try:
+            main_tsx.write_text(text, encoding='utf-8')
+        except Exception:
+            return
+        return
+
+    # Only patch the common template shape: BrowserRouter without basename.
     if 'basename=' in text or 'getRouterBasename' in text:
         return
     if '<BrowserRouter>' not in text:
@@ -33,7 +48,7 @@ def ensure_preview_router_basename(workspace: Path) -> None:
     helper = (
         "\nfunction getRouterBasename(): string {\n"
         "  const path = window.location.pathname || \"/\";\n"
-        "  const match = path.match(/^\\/preview\\/[^/]+/);\n"
+        "  const match = path.match(/^\\/(?:preview|previews|p)\\/[^/]+/);\n"
         "  return match ? match[0] : \"/\";\n"
         "}\n"
     )
