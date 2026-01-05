@@ -31,7 +31,7 @@ export default function TopBar({
     <div className="min-h-14 border-b border-[color:var(--border)] flex flex-wrap items-center justify-between gap-3 px-4 py-2 bg-[color:var(--panel)]">
       <div>
         <p className="text-xs uppercase tracking-wide text-[color:var(--text-muted)]/70">Project</p>
-        <p className="font-semibold text-[color:var(--text-primary)]">CodeLaunchAI Demo</p>
+        <p className="font-semibold text-[color:var(--text-primary)]">Codlearn</p>
       </div>
       <div className="flex flex-wrap gap-2 items-center justify-end">
         {projects && projects.length > 0 && onSelectProject ? (

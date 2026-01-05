@@ -28,7 +28,7 @@ export default function Landing() {
     <div className="landing-legacy">
       <div className="page-shell">
         <header>
-          <div className="brand">CodeLaunchAI</div>
+          <div className="brand">Codlearn</div>
           <nav>
             <button className="nav-link" type="button" onClick={() => scrollToId('features')}>
               Features
@@ -142,7 +142,7 @@ export default function Landing() {
         <section id="testimonials">
           <h2 className="section-title">Builders shipping faster</h2>
           <p className="section-subtitle">
-            Student labs, hackathons, and indie founders use CodeLaunchAI to accelerate launch cycles.
+            Student labs, hackathons, and indie founders use Codlearn to accelerate launch cycles.
           </p>
           <div className="testimonials">
             <div className="card">
@@ -235,7 +235,7 @@ export default function Landing() {
         </section>
 
         <footer>
-          <div>© 2025 CodeLaunchAI · Powered by ethical AI</div>
+          <div>© 2025 Codlearn · Powered by ethical AI</div>
           <ul>
             <li><a href="#">About</a></li>
             <li><a href="#">Docs</a></li>
