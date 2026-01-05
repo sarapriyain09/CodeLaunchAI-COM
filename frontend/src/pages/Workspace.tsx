@@ -12,18 +12,30 @@ const DEFAULT_ASSISTANT_MESSAGE: api.ChatMessage = {
 };
 
 function getActiveSessionProjectId() {
-  return sessionStorage.getItem("cla_active_project_id") || sessionStorage.getItem("cla_project_id");
+  return (
+    sessionStorage.getItem("cla_active_project_id") ||
+    sessionStorage.getItem("cla_project_id") ||
+    localStorage.getItem("cla_active_project_id") ||
+    localStorage.getItem("cla_project_id")
+  );
 }
 
 function setActiveSessionProjectId(id: string) {
   sessionStorage.setItem("cla_active_project_id", id);
   // Back-compat with older sessions.
   sessionStorage.setItem("cla_project_id", id);
+
+  // Persist across refresh/reopen so we don't auto-create new projects.
+  localStorage.setItem("cla_active_project_id", id);
+  localStorage.setItem("cla_project_id", id);
 }
 
 function clearActiveSessionProjectId() {
   sessionStorage.removeItem("cla_active_project_id");
   sessionStorage.removeItem("cla_project_id");
+
+  localStorage.removeItem("cla_active_project_id");
+  localStorage.removeItem("cla_project_id");
 }
 
 function formatProjectTimestamp(iso?: string | null) {
@@ -240,24 +252,23 @@ export default function Workspace() {
         if (cancelled) return;
         setProjects(list.projects);
 
-        const active = projectId;
-        if (active) {
-          const exists = list.projects.some((p) => p.id === active);
-          if (!exists) {
-            const created = await api.createProject(undefined, active);
-            if (cancelled) return;
-            setProjects((prev) => [created, ...prev]);
-          }
-          setPreviewUrl(api.previewUrl(active));
+        const desired = projectId && list.projects.some((p) => p.id === projectId)
+          ? projectId
+          : (list.projects[0]?.id ?? null);
+
+        if (!desired) {
+          // Do not auto-create projects on refresh.
+          clearActiveSessionProjectId();
+          setProjectId(null);
+          setPreviewUrl(null);
+          setFiles([]);
+          setChatMessages([DEFAULT_ASSISTANT_MESSAGE]);
           return;
         }
 
-        const created = await api.createProject();
-        if (cancelled) return;
-        setProjects((prev) => [created, ...prev]);
-        setProjectId(created.id);
-        setActiveSessionProjectId(created.id);
-        setPreviewUrl(api.previewUrl(created.id));
+        setProjectId(desired);
+        setActiveSessionProjectId(desired);
+        setPreviewUrl(api.previewUrl(desired));
       } catch {
         // Non-fatal: workspace can still operate with an existing session project id.
         if (!cancelled && projectId) {
@@ -699,7 +710,7 @@ export default function Workspace() {
     blueprintMeta ??
     generationStatus ??
     (!projectId
-      ? "Creating project…"
+      ? "No project yet. Click + New chat to start."
       : isBusy
         ? "Builder is thinking…"
         : typeof buildProgress === "number" && streamUrl
@@ -712,7 +723,7 @@ export default function Workspace() {
   const hintText =
     downloadStatus ??
     (!projectId
-      ? "Creating project…"
+      ? "No project yet. Click + New chat to start."
       : hasPreview === false
         ? "No preview yet. Click Generate to create your first build."
         : "Shift+Enter for a new line. Generate to refresh the preview.");
@@ -937,9 +948,11 @@ export default function Workspace() {
 
                     {files.length === 0 ? (
                       <div style={{ color: "var(--muted)", fontSize: 13, lineHeight: 1.4 }}>
-                        {isBusy
+                        {generationStatus
                           ? "Generating files…"
-                          : "Click Generate to create files. The code will appear here."}
+                          : isBusy
+                            ? "Working…"
+                            : "Click Generate to create files. The code will appear here."}
                       </div>
                     ) : (
                       <pre
