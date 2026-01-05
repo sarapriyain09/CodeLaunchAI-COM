@@ -289,7 +289,25 @@
     padding: 24px;
   }
 
+  .landing-legacy header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
   .landing-legacy nav {
-    display: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .landing-legacy nav a,
+  .landing-legacy nav .nav-link {
+    margin-left: 0;
+    font-size: 0.95rem;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.04);
   }
 }
