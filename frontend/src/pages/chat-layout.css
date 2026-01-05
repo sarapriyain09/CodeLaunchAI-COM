@@ -456,6 +456,23 @@
     align-items: flex-start;
   }
 
+  .chatLayoutScreen .topbarRight {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .chatLayoutScreen .usagePill {
+    height: 34px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .chatLayoutScreen .ghostBtn {
+    padding: 9px 12px;
+    font-size: 13px;
+  }
+
   .chatLayoutScreen .composer {
     flex-direction: column;
   }
