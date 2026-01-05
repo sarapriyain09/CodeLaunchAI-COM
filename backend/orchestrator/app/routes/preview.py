@@ -222,6 +222,17 @@ async def public_preview_index(project_id: str) -> HTMLResponse:
     return _preview_index_html(project_id, mount='p')
 
 
+@router.get('/previews/{project_id}/', response_class=HTMLResponse)
+async def public_previews_index(project_id: str) -> HTMLResponse:
+    """Second public-domain-friendly alias for preview.
+
+    Some hosts may treat short paths like /p/* or /preview/* specially. Provide a
+    longer, explicit path that is unlikely to collide with platform routing.
+    """
+
+    return _preview_index_html(project_id, mount='previews')
+
+
 @router.get('/preview/{project_id}/{asset_path:path}')
 async def preview_assets(project_id: str, asset_path: str):
     return _preview_asset_response(project_id, asset_path, mount='preview')
@@ -230,6 +241,11 @@ async def preview_assets(project_id: str, asset_path: str):
 @router.get('/p/{project_id}/{asset_path:path}')
 async def public_preview_assets(project_id: str, asset_path: str):
     return _preview_asset_response(project_id, asset_path, mount='p')
+
+
+@router.get('/previews/{project_id}/{asset_path:path}')
+async def public_previews_assets(project_id: str, asset_path: str):
+    return _preview_asset_response(project_id, asset_path, mount='previews')
 
 
 @router.get('/assets/{asset_path:path}')
@@ -241,7 +257,7 @@ async def preview_assets_root(asset_path: str, request: Request):
     """
 
     referer = request.headers.get('referer') or request.headers.get('referrer') or ''
-    match = re.search(r'/(?:preview|p)/(?P<pid>[^/]+)/', referer)
+    match = re.search(r'/(?:preview|p|previews)/(?P<pid>[^/]+)/', referer)
     if not match:
         raise HTTPException(status_code=404, detail='Unknown preview context for /assets request.')
 

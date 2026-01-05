@@ -249,7 +249,7 @@ export function previewUrl(projectId: string) {
   const origin = (typeof window !== "undefined" && window.location?.origin)
     ? window.location.origin
     : ORCH_BASE;
-  return `${origin}/p/${encodeURIComponent(projectId)}/`;
+  return `${origin}/previews/${encodeURIComponent(projectId)}/`;
 }
 
 export async function exportZip(projectId: string, token?: string | null): Promise<Blob> {

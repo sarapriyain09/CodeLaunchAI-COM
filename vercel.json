@@ -9,6 +9,10 @@
       "destination": "/:path*"
     },
     {
+      "source": "/previews/:path*",
+      "destination": "https://codelaunchai-com-1.onrender.com/previews/:path*"
+    },
+    {
       "source": "/p/:path*",
       "destination": "https://codelaunchai-com-1.onrender.com/p/:path*"
     },
