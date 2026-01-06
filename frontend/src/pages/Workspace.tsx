@@ -38,6 +38,22 @@ function clearActiveSessionProjectId() {
   localStorage.removeItem("cla_project_id");
 }
 
+function hasSeenWorkspaceTip() {
+  try {
+    return localStorage.getItem("cla_seen_workspace_tip") === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markSeenWorkspaceTip() {
+  try {
+    localStorage.setItem("cla_seen_workspace_tip", "1");
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
 function formatProjectTimestamp(iso?: string | null) {
   if (!iso) return "Just now";
   const date = new Date(iso);
@@ -82,9 +98,7 @@ export default function Workspace() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [threadQuery, setThreadQuery] = useState("");
   const [chatMessages, setChatMessages] = useState<api.ChatMessage[]>([DEFAULT_ASSISTANT_MESSAGE]);
-  const [draft, setDraft] = useState(
-    "Build a modern minimal jewellery ecommerce site with home, product grid, product detail, about, and contact sections.",
-  );
+  const [draft, setDraft] = useState("");
   const [isBusy, setIsBusy] = useState(false);
   const [deletingProjectId, setDeletingProjectId] = useState<string | null>(null);
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
@@ -95,8 +109,11 @@ export default function Workspace() {
   const [buildProgress, setBuildProgress] = useState<number | null>(null);
   const [showCodePanel, setShowCodePanel] = useState(true);
   const [generationStatus, setGenerationStatus] = useState<string | null>(null);
+  const [showWorkspaceTip, setShowWorkspaceTip] = useState(() => !hasSeenWorkspaceTip());
   const revealTimersRef = useRef<number[]>([]);
   const revealBufferRef = useRef<api.FileItem[]>([]);
+  const didBootstrapRef = useRef(false);
+  const composerRef = useRef<HTMLTextAreaElement | null>(null);
 
   const clearRevealTimers = useCallback(() => {
     for (const id of revealTimersRef.current) {
@@ -244,6 +261,8 @@ export default function Workspace() {
 
   // Load projects list and ensure we have an active project.
   useEffect(() => {
+    if (didBootstrapRef.current) return;
+    didBootstrapRef.current = true;
     let cancelled = false;
 
     (async () => {
@@ -257,13 +276,28 @@ export default function Workspace() {
           : (list.projects[0]?.id ?? null);
 
         if (!desired) {
-          // Do not auto-create projects on refresh.
-          clearActiveSessionProjectId();
-          setProjectId(null);
-          setPreviewUrl(null);
-          setFiles([]);
-          setChatMessages([DEFAULT_ASSISTANT_MESSAGE]);
-          return;
+          // First-time UX: auto-create an initial project when the account has none,
+          // so the user can start typing immediately.
+          try {
+            const created = await api.createProject();
+            if (cancelled) return;
+            setProjects([created]);
+            setProjectId(created.id);
+            setActiveSessionProjectId(created.id);
+            setFiles([]);
+            setChatMessages([DEFAULT_ASSISTANT_MESSAGE]);
+            setDraft("");
+            setPreviewUrl(api.previewUrl(created.id));
+            return;
+          } catch {
+            // If auto-create fails, fall back to the explicit "+ New chat" flow.
+            clearActiveSessionProjectId();
+            setProjectId(null);
+            setPreviewUrl(null);
+            setFiles([]);
+            setChatMessages([DEFAULT_ASSISTANT_MESSAGE]);
+            return;
+          }
         }
 
         setProjectId(desired);
@@ -281,6 +315,19 @@ export default function Workspace() {
       cancelled = true;
     };
   }, []);
+
+  // Focus the composer once a project exists.
+  useEffect(() => {
+    if (!projectId) return;
+    const id = window.setTimeout(() => {
+      try {
+        composerRef.current?.focus();
+      } catch {
+        // Ignore focus failures.
+      }
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [projectId]);
 
   // Refresh usage status periodically.
   useEffect(() => {
@@ -867,6 +914,9 @@ export default function Workspace() {
                   AI: offline fallback
                 </div>
               ) : null}
+              <button className="ghostBtn" onClick={() => { window.location.href = "/app/"; }}>
+                Home
+              </button>
               <button className="ghostBtn" onClick={handlePreviewClick} disabled={disablePreview}>
                 Open preview
               </button>
@@ -886,6 +936,29 @@ export default function Workspace() {
             <div style={{ display: "flex", gap: 16, height: "100%", flexWrap: "wrap" }}>
               <div style={{ flex: "2 1 520px", minWidth: 280, display: "flex", flexDirection: "column" }}>
                 <div className="messages">
+                  {showWorkspaceTip ? (
+                    <div className="row bot">
+                      <div className="bubble">
+                        <div className="role">Quick start</div>
+                        <div className="text">
+                          Type what you want to build, press Enter to chat, then click Generate to create files & a preview.
+                          Use + New chat to start a fresh project anytime.
+                        </div>
+                        <div style={{ marginTop: 10, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                          <button
+                            type="button"
+                            className="ghostBtn"
+                            onClick={() => {
+                              markSeenWorkspaceTip();
+                              setShowWorkspaceTip(false);
+                            }}
+                          >
+                            Got it
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
                   {chatMessages.map((message, index) => (
                     <div key={`${message.role}-${index}`} className={`row ${message.role === "user" ? "me" : "bot"}`}>
                       <div className="bubble">
@@ -997,6 +1070,7 @@ export default function Workspace() {
           <footer className="composerWrap">
             <div className="composer">
               <textarea
+                ref={composerRef}
                 className="input"
                 placeholder="Message... (Enter to send, Shift+Enter for new line)"
                 value={draft}
