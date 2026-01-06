@@ -22,7 +22,8 @@ from app.services.stream_runner import (
 )
 from app.services.image_client import maybe_generate_images_and_rewrite_files
 from app.services.project_files_store import get_project_files_payload
-from app.services.project_store import touch_project
+from app.services.project_access import get_project_owner_key
+from app.services.project_store import get_project, touch_project
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -163,9 +164,12 @@ def sse_event(event: str, data: str) -> str:
 
 
 @router.post('/projects/{project_id}/materialize', response_model=MaterializeResponse)
-async def materialize_project(project_id: str, body: MaterializeRequest) -> MaterializeResponse:
+async def materialize_project(request: Request, project_id: str, body: MaterializeRequest) -> MaterializeResponse:
+    owner_key = get_project_owner_key(request)
+    if get_project(owner_key=owner_key, project_id=project_id) is None:
+        raise HTTPException(status_code=404, detail='Project not found')
     try:
-        touch_project(project_id)
+        touch_project(owner_key=owner_key, project_id=project_id)
         workspace = _workspace(project_id)
         files = await generate_vite_react_project(body.blueprint, body.project_name)
 
@@ -194,14 +198,17 @@ async def materialize_project(project_id: str, body: MaterializeRequest) -> Mate
 
 
 @router.post('/projects/{project_id}/build', response_model=BuildResponse)
-async def build_project(project_id: str) -> BuildResponse:
+async def build_project(request: Request, project_id: str) -> BuildResponse:
+    owner_key = get_project_owner_key(request)
+    if get_project(owner_key=owner_key, project_id=project_id) is None:
+        raise HTTPException(status_code=404, detail='Project not found')
     workspace = _workspace(project_id)
     if not workspace.exists():
         raise HTTPException(status_code=404, detail='Workspace not found; generate/materialize first.')
 
     _ensure_materialized_workspace(project_id, workspace)
 
-    touch_project(project_id)
+    touch_project(owner_key=owner_key, project_id=project_id)
 
     try:
         clean_dist(workspace)

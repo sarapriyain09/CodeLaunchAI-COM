@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 from pydantic import ValidationError
 
@@ -18,6 +18,7 @@ from app.services.materializer import ensure_gitignore, write_file_tree
 from app.services.planner import patch_blueprint
 from app.services.project_files_store import get_project_files_payload, put_project_files_payload
 from app.services.project_state_store import get_project_state_payload, put_project_state_payload
+from app.services.project_access import get_project_owner_key
 from app.services.project_store import touch_project
 from app.services.project_store import get_project
 
@@ -147,8 +148,9 @@ def _workspace_has_base_app(workspace: Path) -> bool:
 
 
 @router.post('/projects/{project_id}/patch', response_model=PatchResponse)
-async def patch_project(project_id: str, body: PatchRequest) -> PatchResponse:
-    if get_project(project_id) is None:
+async def patch_project(request: Request, project_id: str, body: PatchRequest) -> PatchResponse:
+    owner_key = get_project_owner_key(request)
+    if get_project(owner_key=owner_key, project_id=project_id) is None:
         raise HTTPException(status_code=404, detail='Project not found')
 
     instruction = body.instruction.strip()
@@ -156,7 +158,7 @@ async def patch_project(project_id: str, body: PatchRequest) -> PatchResponse:
         raise HTTPException(status_code=400, detail='Missing instruction')
 
     try:
-        touch_project(project_id)
+        touch_project(owner_key=owner_key, project_id=project_id)
 
         state_payload = get_project_state_payload(project_id)
         if state_payload is None:

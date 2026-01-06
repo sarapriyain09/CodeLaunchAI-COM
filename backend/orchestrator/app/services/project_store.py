@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import uuid
@@ -12,7 +13,7 @@ from sqlalchemy import select
 
 from app.config import WORKSPACES_DIR
 from app.db import db_enabled, session_scope
-from app.db_models import Project as ProjectRow, ProjectChatMessage as ProjectChatMessageRow
+from app.db_models import Project as ProjectRow, ProjectChatMessage as ProjectChatMessageRow, ProjectOwner as ProjectOwnerRow
 from app.schemas.projects import Project
 
 
@@ -71,10 +72,19 @@ def _delete_workspace(project_id: str) -> None:
         shutil.rmtree(workspace, ignore_errors=True)
 
 
-def list_projects() -> list[Project]:
+def list_projects(*, owner_key: str) -> list[Project]:
     if db_enabled():
         with session_scope() as session:
-            rows = session.execute(select(ProjectRow).order_by(ProjectRow.updated_at.desc())).scalars().all()
+            rows = (
+                session.execute(
+                    select(ProjectRow)
+                    .join(ProjectOwnerRow, ProjectOwnerRow.project_id == ProjectRow.id)
+                    .where(ProjectOwnerRow.owner_key == owner_key)
+                    .order_by(ProjectRow.updated_at.desc())
+                )
+                .scalars()
+                .all()
+            )
             return [
                 Project(
                     id=r.id,
@@ -89,6 +99,8 @@ def list_projects() -> list[Project]:
     out: list[Project] = []
     for raw in data["projects"]:
         try:
+            if isinstance(raw, dict) and raw.get("owner") != owner_key:
+                continue
             out.append(Project.model_validate(raw))
         except Exception:
             continue
@@ -97,9 +109,12 @@ def list_projects() -> list[Project]:
     return out
 
 
-def get_project(project_id: str) -> Project | None:
+def get_project(*, owner_key: str, project_id: str) -> Project | None:
     if db_enabled():
         with session_scope() as session:
+            owner = session.get(ProjectOwnerRow, project_id)
+            if owner is None or owner.owner_key != owner_key:
+                return None
             row = session.get(ProjectRow, project_id)
             if row is None:
                 return None
@@ -110,7 +125,7 @@ def get_project(project_id: str) -> Project | None:
                 updated_at=row.updated_at,
             )
 
-    for project in list_projects():
+    for project in list_projects(owner_key=owner_key):
         if project.id == project_id:
             return project
     return None
@@ -120,14 +135,50 @@ def _make_default_name(existing_count: int) -> str:
     return f"Project {existing_count + 1}"
 
 
-def create_project(name: str | None = None, project_id: str | None = None) -> Project:
+def _owner_unlimited(owner_key: str) -> bool:
+    # Local dev: always unlimited.
+    if owner_key.startswith("anon:127.0.0.1") or owner_key.startswith("anon:::1"):
+        return True
+
+    allow_keys = {
+        e.strip()
+        for e in (os.getenv("UNLIMITED_PROJECT_OWNER_KEYS", "") or "").split(",")
+        if e.strip()
+    }
+    if owner_key in allow_keys:
+        return True
+
+    if owner_key.startswith("anon:"):
+        ip = owner_key.split(":", 1)[1].strip()
+        allow_ips = {
+            e.strip()
+            for e in (os.getenv("UNLIMITED_PROJECT_IPS", "") or "").split(",")
+            if e.strip()
+        }
+        if ip and ip in allow_ips:
+            return True
+
+    return False
+
+
+def _max_projects_for_owner(owner_key: str) -> int:
+    if _owner_unlimited(owner_key):
+        return 0
+    raw = os.getenv("MAX_PROJECTS_PER_OWNER", "1")
+    try:
+        return max(0, int(str(raw).strip()))
+    except Exception:
+        return 1
+
+
+def create_project(*, owner_key: str, name: str | None = None, project_id: str | None = None) -> Project:
     if project_id is not None:
         project_id = project_id.strip()
         if not _PROJECT_ID_RE.match(project_id):
             raise ValueError("Invalid project_id; expected like p_<uuid>")
 
     now = _utcnow()
-    current = list_projects()
+    current = list_projects(owner_key=owner_key)
 
     if project_id is None:
         project_id = f"p_{uuid.uuid4().hex}"
@@ -136,6 +187,10 @@ def create_project(name: str | None = None, project_id: str | None = None) -> Pr
         # idempotent create: return existing
         existing = next(p for p in current if p.id == project_id)
         return existing
+
+    limit = _max_projects_for_owner(owner_key)
+    if limit > 0 and len(current) >= limit:
+        raise ValueError("Project limit reached for this user. Please delete your existing project to create a new one.")
 
     safe_name = (name or "").strip() or _make_default_name(len(current))
 
@@ -148,6 +203,11 @@ def create_project(name: str | None = None, project_id: str | None = None) -> Pr
 
     if db_enabled():
         with session_scope() as session:
+            existing_owner = session.get(ProjectOwnerRow, project_id)
+            if existing_owner is not None:
+                if existing_owner.owner_key != owner_key:
+                    raise ValueError("Project id already exists")
+
             existing = session.get(ProjectRow, project_id)
             if existing is not None:
                 return Project(
@@ -158,6 +218,7 @@ def create_project(name: str | None = None, project_id: str | None = None) -> Pr
                 )
             row = ProjectRow(id=project_id, name=safe_name)
             session.add(row)
+            session.add(ProjectOwnerRow(project_id=project_id, owner_key=owner_key))
             session.flush()
             return Project(
                 id=row.id,
@@ -166,17 +227,33 @@ def create_project(name: str | None = None, project_id: str | None = None) -> Pr
                 updated_at=row.updated_at,
             )
 
-    # persist
+    # persist (JSON)
     db = _load()
-    db["projects"] = [p.model_dump(mode="json") for p in current] + [project.model_dump(mode="json")]
+    existing = db.get("projects", [])
+    if not isinstance(existing, list):
+        existing = []
+
+    # Keep other owners' records intact.
+    others: list = []
+    for entry in existing:
+        if isinstance(entry, dict) and entry.get("owner") == owner_key:
+            continue
+        others.append(entry)
+
+    record = project.model_dump(mode="json")
+    record["owner"] = owner_key
+    db["projects"] = others + [p.model_dump(mode="json") | {"owner": owner_key} for p in current] + [record]
     _atomic_write(_db_path(), db)
 
     return project
 
 
-def touch_project(project_id: str) -> None:
+def touch_project(*, owner_key: str, project_id: str) -> None:
     if db_enabled():
         with session_scope() as session:
+            owner = session.get(ProjectOwnerRow, project_id)
+            if owner is None or owner.owner_key != owner_key:
+                return
             row = session.get(ProjectRow, project_id)
             if row is None:
                 return
@@ -190,7 +267,7 @@ def touch_project(project_id: str) -> None:
 
     changed = False
     for p in projects:
-        if isinstance(p, dict) and p.get("id") == project_id:
+        if isinstance(p, dict) and p.get("id") == project_id and p.get("owner") == owner_key:
             p["updated_at"] = now
             changed = True
             break
@@ -199,15 +276,19 @@ def touch_project(project_id: str) -> None:
         _atomic_write(_db_path(), {"projects": projects})
 
 
-def delete_project(project_id: str) -> bool:
+def delete_project(*, owner_key: str, project_id: str) -> bool:
     """Remove a project record and its generated workspace."""
 
     if db_enabled():
         with session_scope() as session:
+            owner = session.get(ProjectOwnerRow, project_id)
+            if owner is None or owner.owner_key != owner_key:
+                return False
             project = session.get(ProjectRow, project_id)
             if project is None:
                 return False
             session.query(ProjectChatMessageRow).filter(ProjectChatMessageRow.project_id == project_id).delete()
+            session.delete(owner)
             session.delete(project)
             session.flush()
     else:
@@ -216,7 +297,7 @@ def delete_project(project_id: str) -> bool:
         filtered: list = []
         removed = False
         for entry in projects:
-            if isinstance(entry, dict) and entry.get("id") == project_id:
+            if isinstance(entry, dict) and entry.get("id") == project_id and entry.get("owner") == owner_key:
                 removed = True
                 continue
             filtered.append(entry)

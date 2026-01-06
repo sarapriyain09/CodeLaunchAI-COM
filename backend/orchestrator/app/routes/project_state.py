@@ -2,17 +2,19 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from app.schemas.project_state import ProjectState, UpdateProjectStateRequest
 from app.services.project_state_store import get_project_state_payload, put_project_state_payload
+from app.services.project_access import get_project_owner_key
 from app.services.project_store import get_project
 
 router = APIRouter()
 
 
 @router.get("/projects/{project_id}/state", response_model=ProjectState)
-def get_project_state(project_id: str) -> ProjectState:
-    if get_project(project_id) is None:
+def get_project_state(request: Request, project_id: str) -> ProjectState:
+    owner_key = get_project_owner_key(request)
+    if get_project(owner_key=owner_key, project_id=project_id) is None:
         raise HTTPException(status_code=404, detail="Project not found")
 
     payload = get_project_state_payload(project_id)
@@ -29,8 +31,9 @@ def get_project_state(project_id: str) -> ProjectState:
 
 
 @router.put("/projects/{project_id}/state", response_model=ProjectState)
-def put_project_state(project_id: str, body: UpdateProjectStateRequest) -> ProjectState:
-    if get_project(project_id) is None:
+def put_project_state(request: Request, project_id: str, body: UpdateProjectStateRequest) -> ProjectState:
+    owner_key = get_project_owner_key(request)
+    if get_project(owner_key=owner_key, project_id=project_id) is None:
         raise HTTPException(status_code=404, detail="Project not found")
 
     try:

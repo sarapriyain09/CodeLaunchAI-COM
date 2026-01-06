@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 
 from app.schemas.files import FileItem
 from app.schemas.project_files import ProjectFiles, UpdateProjectFilesRequest
 from app.services.project_files_store import get_project_files_payload, put_project_files_payload
+from app.services.project_access import get_project_owner_key
 from app.services.project_store import get_project
 
 router = APIRouter()
@@ -27,8 +28,9 @@ def _coerce_file_items(raw: object) -> list[FileItem]:
 
 
 @router.get("/projects/{project_id}/files", response_model=ProjectFiles)
-def get_project_files(project_id: str) -> ProjectFiles:
-    if get_project(project_id) is None:
+def get_project_files(request: Request, project_id: str) -> ProjectFiles:
+    owner_key = get_project_owner_key(request)
+    if get_project(owner_key=owner_key, project_id=project_id) is None:
         raise HTTPException(status_code=404, detail="Project not found")
 
     payload = get_project_files_payload(project_id)
@@ -48,8 +50,9 @@ def get_project_files(project_id: str) -> ProjectFiles:
 
 
 @router.put("/projects/{project_id}/files", response_model=ProjectFiles)
-def put_project_files(project_id: str, body: UpdateProjectFilesRequest) -> ProjectFiles:
-    if get_project(project_id) is None:
+def put_project_files(request: Request, project_id: str, body: UpdateProjectFilesRequest) -> ProjectFiles:
+    owner_key = get_project_owner_key(request)
+    if get_project(owner_key=owner_key, project_id=project_id) is None:
         raise HTTPException(status_code=404, detail="Project not found")
 
     sanitized: list[dict] = [{"path": f.path, "content": f.content} for f in body.files]

@@ -52,3 +52,10 @@ class ProjectChatMessage(Base):
     role: Mapped[str] = mapped_column(String(16), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class ProjectOwner(Base):
+    __tablename__ = "project_owners"
+
+    project_id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    owner_key: Mapped[str] = mapped_column(String(128), index=True, nullable=False)
