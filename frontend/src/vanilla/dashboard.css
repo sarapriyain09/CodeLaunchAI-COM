@@ -1,0 +1,205 @@
+.dash-shell {
+  max-width: 1020px;
+  margin: 0 auto;
+  padding: 24px 16px 56px;
+}
+
+.dash-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 0 18px;
+}
+
+.dash-brand a {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  color: var(--text-primary);
+}
+
+.dash-nav {
+  display: flex;
+  gap: 14px;
+}
+
+.dash-nav a {
+  text-decoration: none;
+  color: var(--text-muted);
+}
+
+.dash-nav a:hover {
+  color: var(--accent-secondary);
+}
+
+.dash-main {
+  display: grid;
+  gap: 16px;
+}
+
+.dash-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--card-glow);
+  padding: 16px;
+}
+
+.dash-card-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.dash-card h1 {
+  margin: 0;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 22px;
+}
+
+.dash-card h2 {
+  margin: 0;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 18px;
+}
+
+.dash-muted {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.dash-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 760px) {
+  .dash-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-primary);
+  outline: none;
+  font: inherit;
+}
+
+input,
+select {
+  height: 42px;
+  padding: 0 12px;
+}
+
+textarea {
+  padding: 10px 12px;
+  resize: vertical;
+}
+
+.dash-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.dash-row-tight {
+  margin-top: 0;
+}
+
+.dash-grow {
+  flex: 1;
+}
+
+.dash-btn {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-primary);
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dash-btn-primary {
+  border: none;
+  background: linear-gradient(120deg, var(--accent), var(--accent-secondary));
+  color: #090b12;
+}
+
+.dash-btn-link {
+  color: var(--text-primary);
+}
+
+.dash-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.dash-status {
+  margin-top: 10px;
+  min-height: 18px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.dash-status.ok {
+  color: var(--accent-secondary);
+}
+
+.dash-status.err {
+  color: var(--accent);
+}
+
+.dash-chat {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.dash-bubble {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.dash-bubble .dash-bubble-role {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.dash-bubble pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 13px;
+}

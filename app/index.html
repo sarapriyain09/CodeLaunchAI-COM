@@ -12,7 +12,7 @@
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <title>Codlearn Builder</title>
+    <title>Codlearn</title>
       <script>
         // Expose Vite env to static redirect pages under /app/.
         // This avoids ever doing billing on the Vite server.
@@ -33,10 +33,209 @@
           window.__PUBLIC_SITE_URL__ = base;
         })();
       </script>
-    <script type="module" crossorigin src="/app/assets/index-C2Qq3Ga5.js"></script>
-    <link rel="stylesheet" crossorigin href="/app/assets/index-h74ecY_h.css">
+    <script type="module" crossorigin src="/app/assets/index-RjwLBJjS.js"></script>
+    <link rel="modulepreload" crossorigin href="/app/assets/index-CX2xs1Uv.js">
+    <link rel="stylesheet" crossorigin href="/app/assets/index-VvDIVFBA.css">
+    <link rel="stylesheet" crossorigin href="/app/assets/index-CI4Mo6D_.css">
   </head>
   <body>
-    <div id="root"></div>
+    <div class="landing-legacy">
+      <div class="page-shell">
+        <header>
+          <div class="brand">Codlearn</div>
+          <nav>
+            <button class="nav-link" type="button" data-scroll="features">Features</button>
+            <button class="nav-link" type="button" data-scroll="how-it-works">How it Works</button>
+            <button class="nav-link" type="button" data-scroll="examples">Examples</button>
+            <button class="nav-link" type="button" data-scroll="pricing">Pricing</button>
+            <button class="nav-link" type="button" data-scroll="support">Support</button>
+            <a class="nav-link" href="dashboard.html">App</a>
+          </nav>
+        </header>
+
+        <section class="hero">
+          <div class="hero-copy">
+            <div class="badge-row">
+              <span class="badge">Students</span>
+              <span class="badge">Web Developers</span>
+              <span class="badge">Bootcamps</span>
+            </div>
+            <h1>Build Real Web Apps with AI in Minutes</h1>
+            <p>
+              Ship full-stack SaaS products with deploy-ready code, subscriptions, and learning-friendly guidance.
+              Spark an idea, describe it, and let AI generate everything from frontend layouts to Stripe-powered
+              payment flows.
+            </p>
+            <div class="cta-row">
+              <a class="cta primary" href="dashboard.html">Get Started Free</a>
+              <button class="cta secondary" type="button">Watch Demo</button>
+            </div>
+          </div>
+          <div class="hero-visual">
+            <div class="hero-screen">
+              <pre>$ describe "Subscription habit tracker"
+&gt; generating UI, API, database...
+&gt; attaching Stripe billing, roles, analytics
+✅ preview ready · deploy in 1 click</pre>
+            </div>
+          </div>
+        </section>
+
+        <section id="features">
+          <h2 class="section-title">Launch-Ready Feature Stack</h2>
+          <p class="section-subtitle">Everything students and indie devs need to go from sketch to deployable SaaS.</p>
+          <div class="feature-grid">
+            <div class="card">
+              <div class="icon-circle">⚙️</div>
+              <h3>Full-Stack Generation</h3>
+              <p>AI assembles frontend, backend, and database schemas with auth, roles, and clean APIs.</p>
+            </div>
+            <div class="card">
+              <div class="icon-circle">💳</div>
+              <h3>Stripe Workflows</h3>
+              <p>Subscription tiers, trials, and secure checkouts built in so you can charge from day one.</p>
+            </div>
+            <div class="card">
+              <div class="icon-circle">🧠</div>
+              <h3>Explainable Code</h3>
+              <p>Inline narratives help students understand architecture and confidently edit any file.</p>
+            </div>
+            <div class="card">
+              <div class="icon-circle">⚡</div>
+              <h3>AI Credit System</h3>
+              <p>Predictable usage caps keep experimentation affordable while rewarding smart prompts.</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="how-it-works">
+          <h2 class="section-title">From idea to deploy in four steps</h2>
+          <p class="section-subtitle">Each step includes guided explanations so classrooms and teams learn while shipping.</p>
+          <div class="steps-grid">
+            <div class="card">
+              <span class="step-number">STEP 01</span>
+              <h3>Describe Your App</h3>
+              <p>Use natural language or upload project briefs. Pick target audience, goals, and monetization.</p>
+            </div>
+            <div class="card">
+              <span class="step-number">STEP 02</span>
+              <h3>AI Generates Code</h3>
+              <p>Receive full-stack scaffolding with reusable components, REST/GraphQL endpoints, and seeded data.</p>
+            </div>
+            <div class="card">
+              <span class="step-number">STEP 03</span>
+              <h3>Preview &amp; Edit</h3>
+              <p>Live playground with diff view, code annotations, and pair-programming style suggestions.</p>
+            </div>
+            <div class="card">
+              <span class="step-number">STEP 04</span>
+              <h3>Deploy &amp; Monetize</h3>
+              <p>Push to managed hosting, connect Stripe, and invite collaborators or mentors in one click.</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="testimonials">
+          <h2 class="section-title">Builders shipping faster</h2>
+          <p class="section-subtitle">Student labs, hackathons, and indie founders use Codlearn to accelerate launch cycles.</p>
+          <div class="testimonials">
+            <div class="card">
+              <blockquote>
+                “I built my first subscription analytics tool between lectures. The AI commentary doubled as a tutor.”
+              </blockquote>
+              <cite>Jane · CS Student</cite>
+            </div>
+            <div class="card">
+              <blockquote>
+                “Stripe billing, user roles, and deployment ready in 30 minutes. Shipping MVPs has never felt this calm.”
+              </blockquote>
+              <cite>Rahul · Indie Developer</cite>
+            </div>
+          </div>
+        </section>
+
+        <section id="examples">
+          <h2 class="section-title">Examples you can generate</h2>
+          <p class="section-subtitle">A few realistic apps students and indie builders ship with the blueprint-first workflow.</p>
+          <div class="examples-grid">
+            <div class="card">
+              <h3>Subscription Habit Tracker</h3>
+              <p>Landing, auth, dashboard, Stripe tiers, email reminders.</p>
+            </div>
+            <div class="card">
+              <h3>Local Business Booking Site</h3>
+              <p>Services page, booking form, availability, contact, clean SEO structure.</p>
+            </div>
+            <div class="card">
+              <h3>Course Cohort Portal</h3>
+              <p>Projects list, assignments, submissions, announcements, student-friendly UI.</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="pricing">
+          <h2 class="section-title">Pricing that scales with ambition</h2>
+          <p class="section-subtitle">Simple tiers with AI credits so you can plan semesters, bootcamps, or solo launches.</p>
+          <p class="section-subtitle" style="margin-top: -20px">Free trial: 10 AI credits for 14 days.</p>
+
+          <div class="pricing-grid">
+            <div class="card">
+              <h3>Student</h3>
+              <p class="price">$10<span>/mo</span></p>
+              <p>50 AI credits/month. Learning + small projects.</p>
+              <a class="cta secondary" href="/subscribe.html?plan=student&interval=month">Subscribe</a>
+            </div>
+            <div class="card">
+              <h3>Pro</h3>
+              <p class="price">$25<span>/mo</span></p>
+              <p>300 AI credits/month. Full website + iterations.</p>
+              <a class="cta primary" href="/subscribe.html?plan=pro&interval=month">Subscribe</a>
+            </div>
+            <div class="card">
+              <h3>Enterprise</h3>
+              <p class="price">Custom</p>
+              <p>Teams / agencies. Custom credits and support.</p>
+              <a class="cta secondary" href="#support">Contact sales</a>
+            </div>
+          </div>
+        </section>
+
+        <section id="support">
+          <h2 class="section-title">Privacy, terms, and live support</h2>
+          <p class="section-subtitle">Transparent policies plus human help when you need it.</p>
+          <div class="policy-grid">
+            <div class="card">
+              <h3>Privacy First</h3>
+              <p>Projects stay encrypted at rest. Classroom data never trains public models. Export or delete anytime.</p>
+              <a href="#">Read Privacy Policy</a>
+            </div>
+            <div class="card">
+              <h3>Fair Terms</h3>
+              <p>Clear usage rights for student IP, compliant with FERPA/GDPR, and transparent AI credit billing.</p>
+              <a href="#">View Terms of Service</a>
+            </div>
+            <div class="card">
+              <h3>Support &amp; Success</h3>
+              <p>24/7 chat for outages, weekday office hours with mentors, and dedicated success channels for schools.</p>
+              <a href="#">Contact Support</a>
+            </div>
+          </div>
+        </section>
+
+        <footer>
+          <div>© 2025 Codlearn · Powered by ethical AI</div>
+          <ul>
+            <li><a href="#">About</a></li>
+            <li><a href="#">Docs</a></li>
+            <li><a href="#">Blog</a></li>
+            <li><a href="#">Contact</a></li>
+            <li><a href="#">Privacy</a></li>
+            <li><a href="#">Terms</a></li>
+            <li><a href="#">Support</a></li>
+          </ul>
+        </footer>
+      </div>
+    </div>
+
   </body>
 </html>

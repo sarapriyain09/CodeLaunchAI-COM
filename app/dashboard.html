@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/app/icon.svg" />
+    <link rel="manifest" href="/app/manifest.webmanifest" />
+    <meta name="theme-color" content="#f7f8fb" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <title>Codlearn · Dashboard</title>
+    <script>
+      // Keep parity with frontend/index.html: public-site links should stay same-origin.
+      (function () {
+        const raw = "http://127.0.0.1:7080";
+        let base = (raw || "").trim();
+        if (!base || base === "http://127.0.0.1:7080") base = window.location.origin;
+
+        try {
+          const parsed = new URL(base, window.location.origin);
+          if (parsed.origin !== window.location.origin) base = window.location.origin;
+        } catch {
+          base = window.location.origin;
+        }
+
+        // @ts-ignore
+        window.__PUBLIC_SITE_URL__ = base;
+      })();
+    </script>
+    <script type="module" crossorigin src="/app/assets/dashboard-BHfrps-c.js"></script>
+    <link rel="modulepreload" crossorigin href="/app/assets/index-CX2xs1Uv.js">
+    <link rel="stylesheet" crossorigin href="/app/assets/index-VvDIVFBA.css">
+    <link rel="stylesheet" crossorigin href="/app/assets/dashboard-5pbs8PaT.css">
+  </head>
+  <body>
+    <div class="dash-shell">
+      <header class="dash-header">
+        <div class="dash-brand">
+          <a href="./">Codlearn</a>
+        </div>
+        <nav class="dash-nav">
+          <a href="./">Home</a>
+          <a href="/subscribe.html">Subscribe</a>
+        </nav>
+      </header>
+
+      <main class="dash-main">
+        <section class="dash-card" aria-label="Account">
+          <div class="dash-card-header">
+            <h1>Dashboard</h1>
+            <div id="userLine" class="dash-muted"></div>
+          </div>
+
+          <div class="dash-grid">
+            <div>
+              <label for="name">Name (optional)</label>
+              <input id="name" type="text" placeholder="Your name" autocomplete="name" />
+            </div>
+            <div>
+              <label for="email">Email</label>
+              <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
+            </div>
+          </div>
+
+          <div class="dash-row">
+            <button id="signIn" class="dash-btn dash-btn-primary" type="button">Sign in</button>
+            <button id="signOut" class="dash-btn" type="button">Sign out</button>
+          </div>
+          <div id="authStatus" class="dash-status" role="status"></div>
+        </section>
+
+        <section class="dash-card" aria-label="Projects">
+          <div class="dash-card-header">
+            <h2>Projects</h2>
+            <div class="dash-row dash-row-tight">
+              <button id="newProject" class="dash-btn" type="button">+ New</button>
+              <a id="openPreview" class="dash-btn dash-btn-link" href="#" target="_blank" rel="noreferrer">Open preview</a>
+            </div>
+          </div>
+
+          <div class="dash-row">
+            <div class="dash-grow">
+              <label for="projectSelect">Active project</label>
+              <select id="projectSelect"></select>
+            </div>
+          </div>
+          <div id="projectStatus" class="dash-status" role="status"></div>
+        </section>
+
+        <section class="dash-card" aria-label="Chat">
+          <div class="dash-card-header">
+            <h2>Describe what you want to build</h2>
+            <div class="dash-muted">This is a simple multi-page (no React) UI.</div>
+          </div>
+
+          <div id="chatLog" class="dash-chat" aria-live="polite"></div>
+
+          <label for="message">Message</label>
+          <textarea id="message" rows="4" placeholder="Tell me what you want to build..."></textarea>
+
+          <div class="dash-row">
+            <button id="generate" class="dash-btn dash-btn-primary" type="button">Generate</button>
+            <button id="send" class="dash-btn dash-btn-primary" type="button">Send</button>
+            <button id="clearChat" class="dash-btn" type="button">Clear</button>
+          </div>
+
+          <div id="chatStatus" class="dash-status" role="status"></div>
+        </section>
+      </main>
+    </div>
+
+  </body>
+</html>

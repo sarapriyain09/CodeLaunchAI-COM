@@ -65,10 +65,6 @@
       "destination": "/app/manifest.webmanifest"
     },
     {
-      "source": "/app/:path*",
-      "destination": "/app/index.html"
-    },
-    {
       "source": "/previews/:path*",
       "destination": "https://codelaunchai-com-1.onrender.com/previews/:path*"
     },

@@ -7,6 +7,7 @@ from app.services.subscription import is_subscribed
 from app.services.usage_context import get_current_usage_actor, get_current_usage_plan_tier
 from app.services.usage_store import get_usage_status
 from app.services.request_ip import get_request_client_ip
+from app.services.anon_identity import COOKIE_NAME as ANON_COOKIE_NAME, get_or_create_anon_id
 import os
 
 
@@ -32,8 +33,14 @@ def usage_status(request: Request) -> dict:
 
     actor = get_current_usage_actor()
     if not actor:
-        host = get_request_client_ip(request)
-        actor = f"anon:{host}"
+        # Should normally be set by middleware, but keep a safe fallback.
+        anon_mode = (os.getenv("ANON_ACTOR_MODE", "cookie") or "cookie").strip().lower()
+        if anon_mode == "ip":
+            host = get_request_client_ip(request)
+            actor = f"anon:{host}"
+        else:
+            anon_id, _is_new = get_or_create_anon_id(request)
+            actor = f"anon:{anon_id}"
 
     status = get_usage_status(actor=actor, plan_tier=plan_tier)
     trial_active = (plan_tier == "trial")

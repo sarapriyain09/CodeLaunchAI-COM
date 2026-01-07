@@ -44,6 +44,7 @@ from app.services.usage_context import (
 )
 from app.services.request_ip import get_request_client_ip
 from app.services.rate_limiter import check_rate_limit, rate_limits_enabled
+from app.services.anon_identity import COOKIE_NAME as ANON_COOKIE_NAME, get_or_create_anon_id
 
 
 def _parse_iso8601(s: str | None) -> datetime | None:
@@ -67,11 +68,19 @@ app = FastAPI(title='CodeLaunch Orchestrator', version='0.1.0')
 async def _usage_actor_middleware(request: Request, call_next):
     # Prefer authenticated user id; fallback to IP-based anonymous id.
     user = try_get_user(request)
+    new_anon_cookie: str | None = None
     if user and user.id:
         actor = f"user:{user.id}"
     else:
-        host = get_request_client_ip(request)
-        actor = f"anon:{host}"
+        anon_mode = (os.getenv("ANON_ACTOR_MODE", "cookie") or "cookie").strip().lower()
+        if anon_mode == "ip":
+            host = get_request_client_ip(request)
+            actor = f"anon:{host}"
+        else:
+            anon_id, is_new = get_or_create_anon_id(request)
+            actor = f"anon:{anon_id}"
+            if is_new:
+                new_anon_cookie = anon_id
 
     set_current_usage_actor(actor)
 
@@ -155,7 +164,23 @@ async def _usage_actor_middleware(request: Request, call_next):
                 },
             )
 
-    return await call_next(request)
+    response = await call_next(request)
+
+    # If we generated a new anon id, persist it so usage is per-browser, not per-IP.
+    if new_anon_cookie:
+        # Secure cookies only over https.
+        secure = (request.url.scheme or "").lower() == "https"
+        response.set_cookie(
+            key=ANON_COOKIE_NAME,
+            value=new_anon_cookie,
+            max_age=60 * 60 * 24 * 365 * 2,
+            httponly=True,
+            samesite="lax",
+            secure=secure,
+            path="/",
+        )
+
+    return response
 
 
 @app.on_event('startup')

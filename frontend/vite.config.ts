@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { resolve } from 'node:path'
 
 // https://vite.dev/config/
 //
@@ -12,11 +12,16 @@ export default defineConfig(({ mode }) => {
   const isBackend = mode === 'backend'
 
   return {
-    plugins: [react()],
     base: isBackend ? '/app/' : '/',
     build: {
       outDir: isBackend ? '../app' : 'dist',
       emptyOutDir: true,
+      rollupOptions: {
+        input: {
+          index: resolve(__dirname, 'index.html'),
+          dashboard: resolve(__dirname, 'dashboard.html'),
+        },
+      },
     },
   }
 })
