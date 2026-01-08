@@ -52,6 +52,7 @@ const els = {
   authStatus: document.getElementById("authStatus") as HTMLDivElement,
 
   projectSelect: document.getElementById("projectSelect") as HTMLSelectElement,
+  projectList: document.getElementById("projectList") as HTMLDivElement,
   newProject: document.getElementById("newProject") as HTMLButtonElement,
   openPreview: document.getElementById("openPreview") as HTMLAnchorElement,
   projectStatus: document.getElementById("projectStatus") as HTMLDivElement,
@@ -99,20 +100,56 @@ function syncPreviewLink() {
 }
 
 function renderProjectSelect() {
-  els.projectSelect.innerHTML = "";
-  for (const p of projects) {
-    const opt = document.createElement("option");
-    opt.value = p.id;
-    opt.textContent = formatProjectLabel(p);
-    els.projectSelect.appendChild(opt);
+  // Keep the hidden select in sync (useful for debugging, and backwards compat).
+  if (els.projectSelect) {
+    els.projectSelect.innerHTML = "";
+    for (const p of projects) {
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = formatProjectLabel(p);
+      els.projectSelect.appendChild(opt);
+    }
+    if (activeProjectId && projects.some((p) => p.id === activeProjectId)) {
+      els.projectSelect.value = activeProjectId;
+    }
   }
 
-  if (activeProjectId && projects.some((p) => p.id === activeProjectId)) {
-    els.projectSelect.value = activeProjectId;
-  } else {
-    activeProjectId = projects[0]?.id ?? null;
-    if (activeProjectId) setActiveProjectId(activeProjectId);
-    if (activeProjectId) els.projectSelect.value = activeProjectId;
+  // Primary UI: project list in sidebar.
+  els.projectList.innerHTML = "";
+  for (const p of projects) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "thread" + (p.id === activeProjectId ? " active" : "");
+
+    const title = document.createElement("div");
+    title.className = "threadTitle";
+    title.textContent = (p.name || "Project").trim() || "Project";
+
+    const meta = document.createElement("div");
+    meta.className = "threadMeta";
+    meta.textContent = p.updated_at
+      ? new Date(p.updated_at).toLocaleString(undefined, { month: "short", day: "numeric" })
+      : "";
+
+    btn.appendChild(title);
+    btn.appendChild(meta);
+
+    btn.addEventListener("click", () => {
+      activeProjectId = p.id;
+      setActiveProjectId(p.id);
+      renderProjectSelect();
+      syncPreviewLink();
+      setStatus(els.projectStatus, "Active project updated.", "ok");
+    });
+
+    els.projectList.appendChild(btn);
+  }
+
+  // Ensure we always have an active project if possible.
+  if (!activeProjectId && projects.length) {
+    activeProjectId = projects[0].id;
+    setActiveProjectId(activeProjectId);
+    renderProjectSelect();
   }
 
   syncPreviewLink();
@@ -337,9 +374,12 @@ function wireEvents() {
   els.signOut.addEventListener("click", () => signOut());
   els.newProject.addEventListener("click", () => void newProject());
 
-  els.projectSelect.addEventListener("change", () => {
+  // The active project is set by clicking a sidebar project; keep this only as a
+  // fallback if someone manually toggles the hidden select.
+  els.projectSelect?.addEventListener?.("change", () => {
     activeProjectId = els.projectSelect.value || null;
     if (activeProjectId) setActiveProjectId(activeProjectId);
+    renderProjectSelect();
     syncPreviewLink();
     setStatus(els.projectStatus, "Active project updated.", "ok");
   });

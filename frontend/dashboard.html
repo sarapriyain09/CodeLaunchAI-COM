@@ -33,81 +33,77 @@
     </script>
   </head>
   <body>
-    <div class="dash-shell">
-      <header class="dash-header">
-        <div class="dash-brand">
-          <a href="./">Codlearn</a>
-        </div>
-        <nav class="dash-nav">
-          <a href="./">Home</a>
-          <a href="/subscribe.html">Subscribe</a>
-        </nav>
-      </header>
-
-      <main class="dash-main">
-        <section class="dash-card" aria-label="Account">
-          <div class="dash-card-header">
-            <h1>Dashboard</h1>
-            <div id="userLine" class="dash-muted"></div>
+    <div class="chatLayoutScreen">
+      <div class="appShell">
+        <aside class="sidebar" aria-label="Projects">
+          <div class="sidebarTop">
+            <div class="brand">
+              <div class="logo" aria-hidden="true"></div>
+              <div>Codlearn</div>
+            </div>
           </div>
 
-          <div class="dash-grid">
-            <div>
+          <div class="sidebarActions">
+            <button id="newProject" class="primaryBtn" type="button">+ New project</button>
+            <a class="ghostBtn" href="/subscribe.html">Subscribe</a>
+          </div>
+
+          <div class="threadList" id="projectList" aria-label="Project list"></div>
+          <div id="projectStatus" class="dash-status" role="status"></div>
+
+          <div class="sidebarFooter" aria-label="Account">
+            <div class="dash-muted" id="userLine"></div>
+            <div style="margin-top: 10px">
               <label for="name">Name (optional)</label>
               <input id="name" type="text" placeholder="Your name" autocomplete="name" />
             </div>
-            <div>
+            <div style="margin-top: 10px">
               <label for="email">Email</label>
               <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
             </div>
+            <div class="dash-row" style="justify-content: flex-start">
+              <button id="signIn" class="dash-btn dash-btn-primary" type="button">Sign in</button>
+              <button id="signOut" class="dash-btn" type="button">Sign out</button>
+            </div>
+            <div id="authStatus" class="dash-status" role="status"></div>
           </div>
+        </aside>
 
-          <div class="dash-row">
-            <button id="signIn" class="dash-btn dash-btn-primary" type="button">Sign in</button>
-            <button id="signOut" class="dash-btn" type="button">Sign out</button>
-          </div>
-          <div id="authStatus" class="dash-status" role="status"></div>
-        </section>
-
-        <section class="dash-card" aria-label="Projects">
-          <div class="dash-card-header">
-            <h2>Projects</h2>
-            <div class="dash-row dash-row-tight">
-              <button id="newProject" class="dash-btn" type="button">+ New</button>
-              <a id="openPreview" class="dash-btn dash-btn-link" href="#" target="_blank" rel="noreferrer">Open preview</a>
+        <main class="main" aria-label="Chat">
+          <div class="topbar">
+            <div class="topbarTitle">
+              <div class="title">Build with AI</div>
+              <div class="subtitle">Describe your app, then generate a preview.</div>
+            </div>
+            <div class="topbarRight">
+              <a id="openPreview" class="ghostBtn" href="#" target="_blank" rel="noreferrer">Open preview</a>
             </div>
           </div>
 
-          <div class="dash-row">
-            <div class="dash-grow">
-              <label for="projectSelect">Active project</label>
-              <select id="projectSelect"></select>
+          <div class="chatArea">
+            <div id="chatLog" class="messages" aria-live="polite"></div>
+          </div>
+
+          <div class="composerWrap">
+            <div class="composer">
+              <textarea
+                id="message"
+                class="input"
+                rows="3"
+                placeholder="Message Codlearn…"
+              ></textarea>
+              <button id="generate" class="sendBtn" type="button">Generate</button>
+              <button id="send" class="ghostBtn" type="button">Send</button>
+              <button id="clearChat" class="ghostBtn" type="button">Clear</button>
             </div>
+            <div id="chatStatus" class="dash-status" role="status"></div>
           </div>
-          <div id="projectStatus" class="dash-status" role="status"></div>
-        </section>
-
-        <section class="dash-card" aria-label="Chat">
-          <div class="dash-card-header">
-            <h2>Describe what you want to build</h2>
-            <div class="dash-muted">This is a simple multi-page (no React) UI.</div>
-          </div>
-
-          <div id="chatLog" class="dash-chat" aria-live="polite"></div>
-
-          <label for="message">Message</label>
-          <textarea id="message" rows="4" placeholder="Tell me what you want to build..."></textarea>
-
-          <div class="dash-row">
-            <button id="generate" class="dash-btn dash-btn-primary" type="button">Generate</button>
-            <button id="send" class="dash-btn dash-btn-primary" type="button">Send</button>
-            <button id="clearChat" class="dash-btn" type="button">Clear</button>
-          </div>
-
-          <div id="chatStatus" class="dash-status" role="status"></div>
-        </section>
-      </main>
+        </main>
+      </div>
     </div>
+
+    <!-- Hidden legacy element (kept for TS compatibility). -->
+    <select id="projectSelect" style="display: none"></select>
 
     <script type="module" src="/src/vanilla/dashboard.ts"></script>
   </body>
