@@ -23,27 +23,34 @@ function escapeForPre(text: string) {
   return text.replace(/[&<>]/g, (ch) => (ch === "&" ? "&amp;" : ch === "<" ? "&lt;" : "&gt;"));
 }
 
-function addBubble(chatLog: HTMLElement, role: string, content: string) {
+function addBubble(chatLog: HTMLElement, role: "user" | "assistant" | "system", content: string) {
+  const row = document.createElement("div");
+  row.className = `msg ${role}`;
+
   const bubble = document.createElement("div");
-  bubble.className = "dash-bubble";
+  bubble.className = "bubble";
   bubble.innerHTML = `
-    <div class="dash-bubble-role">${escapeForPre(role)}</div>
+    <div class="meta">${escapeForPre(role === "user" ? "You" : role === "assistant" ? "Codlearn" : "System")}</div>
     <pre>${escapeForPre(content)}</pre>
   `;
-  chatLog.appendChild(bubble);
-  bubble.scrollIntoView({ block: "end" });
+
+  row.appendChild(bubble);
+  chatLog.appendChild(row);
+  row.scrollIntoView({ block: "end" });
 }
 
 function formatProjectLabel(p: api.Project) {
   const name = (p.name || "Project").trim() || "Project";
   const date = p.updated_at ? new Date(p.updated_at) : null;
-  const suffix = date && !Number.isNaN(date.getTime())
-    ? ` · ${date.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`
-    : "";
+  const suffix =
+    date && !Number.isNaN(date.getTime())
+      ? ` · ${date.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`
+      : "";
   return `${name}${suffix}`;
 }
 
 const els = {
+  // top menu
   userLine: document.getElementById("userLine") as HTMLDivElement,
   name: document.getElementById("name") as HTMLInputElement,
   email: document.getElementById("email") as HTMLInputElement,
@@ -56,6 +63,7 @@ const els = {
   openPreview: document.getElementById("openPreview") as HTMLAnchorElement,
   projectStatus: document.getElementById("projectStatus") as HTMLDivElement,
 
+  // chat
   chatLog: document.getElementById("chatLog") as HTMLDivElement,
   message: document.getElementById("message") as HTMLTextAreaElement,
   generate: document.getElementById("generate") as HTMLButtonElement,
@@ -76,14 +84,14 @@ function setActiveProjectId(id: string) {
 
 let projects: api.Project[] = [];
 let activeProjectId: string | null = getActiveProjectId();
-
 let buildSource: EventSource | null = null;
 
 function stopBuildStream() {
+  if (!buildSource) return;
   try {
-    buildSource?.close();
+    buildSource.close();
   } catch {
-    // Ignore.
+    // ignore
   }
   buildSource = null;
 }
@@ -94,12 +102,14 @@ function syncPreviewLink() {
     els.openPreview.setAttribute("aria-disabled", "true");
     return;
   }
+
   els.openPreview.href = api.previewUrl(activeProjectId);
   els.openPreview.removeAttribute("aria-disabled");
 }
 
 function renderProjectSelect() {
   els.projectSelect.innerHTML = "";
+
   for (const p of projects) {
     const opt = document.createElement("option");
     opt.value = p.id;
@@ -120,6 +130,7 @@ function renderProjectSelect() {
 
 async function refreshProjects() {
   setStatus(els.projectStatus, "Loading projects…");
+
   try {
     const list = await api.listProjects();
     projects = list.projects ?? [];
@@ -172,6 +183,7 @@ async function hydrateUser() {
   }
 
   setStatus(els.authStatus, "Checking session…");
+
   try {
     const me = await api.me(token);
     els.userLine.textContent = me.email;
@@ -192,6 +204,7 @@ function signOut() {
 async function newProject() {
   els.newProject.disabled = true;
   setStatus(els.projectStatus, "Creating project…");
+
   try {
     const created = await api.createProject();
     projects = [created, ...projects];
@@ -199,6 +212,9 @@ async function newProject() {
     setActiveProjectId(created.id);
     renderProjectSelect();
     setStatus(els.projectStatus, "Project created.", "ok");
+
+    els.chatLog.innerHTML = "";
+    addBubble(els.chatLog, "assistant", "New project created. Describe what you want to build.");
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     setStatus(els.projectStatus, `Failed to create project: ${msg}`, "err");
@@ -211,6 +227,7 @@ async function ensureProject(): Promise<string | null> {
   if (activeProjectId) return activeProjectId;
 
   setStatus(els.projectStatus, "Creating project…");
+
   try {
     const created = await api.createProject();
     projects = [created, ...projects];
@@ -239,7 +256,7 @@ async function generatePreview() {
   els.generate.disabled = true;
   els.send.disabled = true;
   setStatus(els.chatStatus, "Planning blueprint…");
-  addBubble(els.chatLog, "you", goal);
+  addBubble(els.chatLog, "user", goal);
 
   try {
     const plan = await api.plan(goal);
@@ -261,7 +278,6 @@ async function generatePreview() {
     buildSource.addEventListener("log", (event) => {
       const data = (event as MessageEvent).data;
       if (typeof data === "string" && data.trim()) {
-        // Keep log minimal: only surface a couple of key lines.
         const lower = data.toLowerCase();
         if (lower.includes("install") || lower.includes("build") || lower.includes("vite")) {
           setStatus(els.chatStatus, data);
@@ -273,8 +289,10 @@ async function generatePreview() {
       stopBuildStream();
       const preview = api.previewUrl(projectId) + `?t=${Date.now()}`;
       syncPreviewLink();
-      setStatus(els.chatStatus, "Preview ready. Opening…", "ok");
+      setStatus(els.chatStatus, "Preview ready.", "ok");
       window.open(preview, "_blank", "noopener,noreferrer");
+      els.generate.disabled = false;
+      els.send.disabled = false;
     });
 
     buildSource.addEventListener("error", (event) => {
@@ -292,7 +310,6 @@ async function generatePreview() {
     addBubble(els.chatLog, "assistant", `Error: ${msg}`);
     setStatus(els.chatStatus, "Generate failed.", "err");
   } finally {
-    // If we did not start a build stream, re-enable buttons here.
     if (!buildSource) {
       els.generate.disabled = false;
       els.send.disabled = false;
@@ -313,7 +330,7 @@ async function sendMessage() {
   setStatus(els.chatStatus, "Sending…");
 
   try {
-    addBubble(els.chatLog, "you", text);
+    addBubble(els.chatLog, "user", text);
     els.message.value = "";
 
     const resp = await api.projectChat(activeProjectId, text);
