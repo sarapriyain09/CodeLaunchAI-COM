@@ -42,7 +42,7 @@ function isStandaloneDisplayMode(): boolean {
 function isMobileLike(): boolean {
   const ua = navigator.userAgent || "";
   const uaMobile = /Android|iPhone|iPad|iPod|Mobi/i.test(ua);
-  const narrow = window.matchMedia?.("(max-width: 880px)")?.matches ?? false;
+  const narrow = window.matchMedia?.("(max-width: 768px)")?.matches ?? false;
   return uaMobile || narrow;
 }
 

@@ -130,7 +130,7 @@ body {
   justify-content: center;
 }
 
-@media (max-width: 880px) {
+@media (max-width: 768px) {
   .topBarInner {
     flex-wrap: wrap;
     justify-content: space-between;
@@ -233,7 +233,7 @@ body {
   min-height: 0;
 }
 
-@media (max-width: 880px) {
+@media (max-width: 768px) {
   .appShell {
     grid-template-columns: 1fr;
   }
@@ -396,7 +396,8 @@ select:focus {
 }
 
 .chatTagline {
-  width: min(var(--dash-content-max), 100%);
+  width: 100%;
+  max-width: var(--dash-content-max);
   margin: 0 auto;
   padding: 18px 0 14px;
   text-align: center;
@@ -429,7 +430,8 @@ select:focus {
 }
 
 .chatLog {
-  width: min(var(--dash-content-max), 100%);
+  width: 100%;
+  max-width: var(--dash-content-max);
   margin: 0 auto;
   flex: none;
   overflow: visible;
@@ -479,7 +481,8 @@ select:focus {
 }
 
 .composer {
-  width: min(var(--dash-content-max), 100%);
+  width: 100%;
+  max-width: var(--dash-content-max);
   margin-left: auto;
   margin-right: auto;
   margin-top: 14px;
