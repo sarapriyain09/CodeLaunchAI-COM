@@ -117,16 +117,9 @@ body {
     order: 3;
     flex: 0 0 100%;
     justify-content: flex-start;
+    flex-wrap: wrap;
     gap: 12px;
-    overflow-x: auto;
-    overflow-y: hidden;
     padding: 8px 0 4px;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-
-  .topNav::-webkit-scrollbar {
-    display: none;
   }
 
   .topNavLink {
