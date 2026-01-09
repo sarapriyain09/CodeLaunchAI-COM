@@ -37,6 +37,15 @@ function addBubble(chatLog: HTMLElement, role: "user" | "assistant" | "system", 
   row.appendChild(bubble);
   chatLog.appendChild(row);
   row.scrollIntoView({ block: "end" });
+
+  updateEmptyState();
+}
+
+function updateEmptyState() {
+  const chatCenter = document.querySelector(".chatCenter") as HTMLElement | null;
+  if (!chatCenter) return;
+  const isEmpty = els.chatLog.childElementCount === 0;
+  chatCenter.classList.toggle("empty", isEmpty);
 }
 
 function formatProjectLabel(p: api.Project) {
@@ -52,10 +61,9 @@ function formatProjectLabel(p: api.Project) {
 const els = {
   // top menu
   userLine: document.getElementById("userLine") as HTMLDivElement,
-  name: document.getElementById("name") as HTMLInputElement,
-  email: document.getElementById("email") as HTMLInputElement,
   signIn: document.getElementById("signIn") as HTMLButtonElement,
   signOut: document.getElementById("signOut") as HTMLButtonElement,
+  getStarted: document.getElementById("getStarted") as HTMLButtonElement | null,
   authStatus: document.getElementById("authStatus") as HTMLDivElement,
 
   projectSelect: document.getElementById("projectSelect") as HTMLSelectElement,
@@ -73,6 +81,14 @@ const els = {
 };
 
 const ACTIVE_PROJECT_KEY = "cla_active_project_id";
+const SPEC_KEY_PREFIX = "cla_site_spec_";
+const AWAITING_SPEC_KEY_PREFIX = "cla_site_spec_awaiting_";
+const PREVIEW_READY_KEY_PREFIX = "cla_preview_ready_";
+
+function setAuthButtons(signedIn: boolean) {
+  els.signIn.hidden = signedIn;
+  els.signOut.hidden = !signedIn;
+}
 
 function getActiveProjectId(): string | null {
   return localStorage.getItem(ACTIVE_PROJECT_KEY);
@@ -82,9 +98,104 @@ function setActiveProjectId(id: string) {
   localStorage.setItem(ACTIVE_PROJECT_KEY, id);
 }
 
+function specKey(projectId: string) {
+  return `${SPEC_KEY_PREFIX}${projectId}`;
+}
+
+function awaitingSpecKey(projectId: string) {
+  return `${AWAITING_SPEC_KEY_PREFIX}${projectId}`;
+}
+
+function getProjectSpec(projectId: string): string | null {
+  const raw = localStorage.getItem(specKey(projectId));
+  return raw && raw.trim() ? raw : null;
+}
+
+function setProjectSpec(projectId: string, spec: string) {
+  localStorage.setItem(specKey(projectId), spec.trim());
+  localStorage.removeItem(awaitingSpecKey(projectId));
+  syncGenerateButton();
+}
+
+function isAwaitingSpec(projectId: string): boolean {
+  return localStorage.getItem(awaitingSpecKey(projectId)) === "1";
+}
+
+function setAwaitingSpec(projectId: string, awaiting: boolean) {
+  if (awaiting) localStorage.setItem(awaitingSpecKey(projectId), "1");
+  else localStorage.removeItem(awaitingSpecKey(projectId));
+  syncGenerateButton();
+}
+
+function syncGenerateButton() {
+  if (!activeProjectId) {
+    els.generate.hidden = true;
+    return;
+  }
+
+  const hasSpec = Boolean(getProjectSpec(activeProjectId));
+  const awaiting = isAwaitingSpec(activeProjectId);
+
+  // UX: hide Generate until we've asked for (and are awaiting) a clarifying spec.
+  // Once a spec is saved, keep Generate available.
+  els.generate.hidden = !(hasSpec || awaiting);
+}
+
+function previewReadyKey(projectId: string) {
+  return `${PREVIEW_READY_KEY_PREFIX}${projectId}`;
+}
+
+function isPreviewReady(projectId: string): boolean {
+  return localStorage.getItem(previewReadyKey(projectId)) === "1";
+}
+
+function markPreviewReady(projectId: string) {
+  localStorage.setItem(previewReadyKey(projectId), "1");
+}
+
+function specQuestions(): string {
+  return [
+    "Before I generate, answer these (copy/paste with answers):",
+    "1) Website type (landing page, portfolio, SaaS, ecommerce, etc.)?",
+    "2) Business/name + one-line tagline?",
+    "3) Target audience?",
+    "4) Pages needed (Home, Pricing, About, Contact, etc.)?",
+    "5) Must-have sections/features (CTA, newsletter, testimonials, gallery, FAQ, forms)?",
+    "6) Visual style (minimal, bold, playful) + preferred colors?",
+    "7) Primary call-to-action (Book demo, Subscribe, Buy, Contact)?",
+    "",
+    "After answering, click Generate.",
+  ].join("\n");
+}
+
+function ensureSpecOrAsk(projectId: string, source: "chat" | "generate"): boolean {
+  const spec = getProjectSpec(projectId);
+  if (spec) return true;
+
+  if (!isAwaitingSpec(projectId)) {
+    setAwaitingSpec(projectId, true);
+    addBubble(
+      els.chatLog,
+      "assistant",
+      source === "generate"
+        ? specQuestions()
+        : ["I can generate a full website, but I need a quick spec first.", "", specQuestions()].join("\n"),
+    );
+  }
+
+  setStatus(els.chatStatus, "Waiting for website spec (answer the questions).", "ok");
+  return false;
+}
+
 let projects: api.Project[] = [];
 let activeProjectId: string | null = getActiveProjectId();
 let buildSource: EventSource | null = null;
+let usageStatus: api.UsageStatus | null = null;
+
+
+function isSubscribedUser(): boolean {
+  return Boolean(usageStatus?.subscribed);
+}
 
 function stopBuildStream() {
   if (!buildSource) return;
@@ -97,14 +208,16 @@ function stopBuildStream() {
 }
 
 function syncPreviewLink() {
-  if (!activeProjectId) {
+  if (!activeProjectId || !isPreviewReady(activeProjectId)) {
     els.openPreview.href = "#";
     els.openPreview.setAttribute("aria-disabled", "true");
+    els.openPreview.hidden = true;
     return;
   }
 
   els.openPreview.href = api.previewUrl(activeProjectId);
   els.openPreview.removeAttribute("aria-disabled");
+  els.openPreview.hidden = false;
 }
 
 function renderProjectSelect() {
@@ -126,16 +239,21 @@ function renderProjectSelect() {
   }
 
   syncPreviewLink();
+  syncGenerateButton();
 }
 
 async function refreshProjects() {
-  setStatus(els.projectStatus, "Loading projects…");
+  // Keep the top bar clean for trial/single-project users.
+  // Only show project status when something goes wrong.
+  setStatus(els.projectStatus, "");
 
   try {
     const list = await api.listProjects();
     projects = list.projects ?? [];
 
-    if (!projects.length) {
+    // Trial users should always have exactly 1 project created for them.
+    // Subscribed users can create as many as they want.
+    if (!isSubscribedUser() && projects.length === 0) {
       const created = await api.createProject();
       projects = [created];
       activeProjectId = created.id;
@@ -143,7 +261,7 @@ async function refreshProjects() {
     }
 
     renderProjectSelect();
-    setStatus(els.projectStatus, `Loaded ${projects.length} project(s).`, "ok");
+    setStatus(els.projectStatus, "");
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     setStatus(els.projectStatus, `Failed to load projects: ${msg}`, "err");
@@ -151,13 +269,11 @@ async function refreshProjects() {
 }
 
 async function signIn() {
-  const email = els.email.value.trim();
-  const name = els.name.value.trim() || null;
-
-  if (!email) {
-    setStatus(els.authStatus, "Email is required.", "err");
-    return;
-  }
+  const emailRaw = window.prompt("Email:") ?? "";
+  const email = emailRaw.trim();
+  if (!email) return;
+  const nameRaw = window.prompt("Name (optional):") ?? "";
+  const name = nameRaw.trim() || null;
 
   els.signIn.disabled = true;
   setStatus(els.authStatus, "Signing in…");
@@ -167,9 +283,14 @@ async function signIn() {
     api.setAccessToken(resp.access_token);
     setStatus(els.authStatus, "Signed in.", "ok");
     els.userLine.textContent = resp.user.email;
+    setAuthButtons(true);
+
+    await hydrateUsage();
+    await refreshProjects();
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     setStatus(els.authStatus, `Sign in failed: ${msg}`, "err");
+    setAuthButtons(false);
   } finally {
     els.signIn.disabled = false;
   }
@@ -178,7 +299,8 @@ async function signIn() {
 async function hydrateUser() {
   const token = api.getAccessToken();
   if (!token) {
-    els.userLine.textContent = "Not signed in";
+    els.userLine.textContent = "";
+    setAuthButtons(false);
     return;
   }
 
@@ -188,22 +310,33 @@ async function hydrateUser() {
     const me = await api.me(token);
     els.userLine.textContent = me.email;
     setStatus(els.authStatus, "Signed in.", "ok");
+    setAuthButtons(true);
   } catch {
     api.clearAccessToken();
-    els.userLine.textContent = "Not signed in";
+    els.userLine.textContent = "";
     setStatus(els.authStatus, "Session expired. Please sign in again.", "err");
+    setAuthButtons(false);
   }
 }
 
 function signOut() {
   api.clearAccessToken();
-  els.userLine.textContent = "Not signed in";
+  els.userLine.textContent = "";
   setStatus(els.authStatus, "Signed out.", "ok");
+  setAuthButtons(false);
+
+  usageStatus = null;
+  void hydrateUsage().then(() => refreshProjects());
 }
 
 async function newProject() {
+  if (!isSubscribedUser() && projects.length >= 1) {
+    setStatus(els.projectStatus, "Trial users can have 1 project. Subscribe for unlimited projects.", "err");
+    return;
+  }
+
   els.newProject.disabled = true;
-  setStatus(els.projectStatus, "Creating project…");
+  setStatus(els.projectStatus, "");
 
   try {
     const created = await api.createProject();
@@ -211,10 +344,11 @@ async function newProject() {
     activeProjectId = created.id;
     setActiveProjectId(created.id);
     renderProjectSelect();
-    setStatus(els.projectStatus, "Project created.", "ok");
+    setStatus(els.projectStatus, "");
 
     els.chatLog.innerHTML = "";
     addBubble(els.chatLog, "assistant", "New project created. Describe what you want to build.");
+    syncGenerateButton();
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     setStatus(els.projectStatus, `Failed to create project: ${msg}`, "err");
@@ -226,7 +360,21 @@ async function newProject() {
 async function ensureProject(): Promise<string | null> {
   if (activeProjectId) return activeProjectId;
 
-  setStatus(els.projectStatus, "Creating project…");
+  // If we already have projects loaded, prefer selecting an existing project
+  // over creating a new one (especially for trial users).
+  if (projects.length > 0) {
+    activeProjectId = projects[0].id;
+    setActiveProjectId(activeProjectId);
+    renderProjectSelect();
+    return activeProjectId;
+  }
+
+  if (!isSubscribedUser() && projects.length >= 1) {
+    setStatus(els.projectStatus, "Trial users can have 1 project. Subscribe for unlimited projects.", "err");
+    return null;
+  }
+
+  setStatus(els.projectStatus, "");
 
   try {
     const created = await api.createProject();
@@ -234,7 +382,7 @@ async function ensureProject(): Promise<string | null> {
     activeProjectId = created.id;
     setActiveProjectId(created.id);
     renderProjectSelect();
-    setStatus(els.projectStatus, "Project created.", "ok");
+    setStatus(els.projectStatus, "");
     return created.id;
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
@@ -245,21 +393,28 @@ async function ensureProject(): Promise<string | null> {
 
 async function generatePreview() {
   const goal = els.message.value.trim();
-  if (!goal) {
+  const projectId = await ensureProject();
+  if (!projectId) return;
+
+  activeProjectId = projectId;
+  syncPreviewLink();
+
+  if (!ensureSpecOrAsk(projectId, "generate")) return;
+
+  const spec = getProjectSpec(projectId);
+  const effectiveGoal = goal || (spec ?? "");
+  if (!effectiveGoal) {
     setStatus(els.chatStatus, "Type what you want to build, then click Generate.", "err");
     return;
   }
 
-  const projectId = await ensureProject();
-  if (!projectId) return;
-
   els.generate.disabled = true;
   els.send.disabled = true;
   setStatus(els.chatStatus, "Planning blueprint…");
-  addBubble(els.chatLog, "user", goal);
+  addBubble(els.chatLog, "user", effectiveGoal);
 
   try {
-    const plan = await api.plan(goal);
+    const plan = await api.plan(effectiveGoal, spec ? { website_spec: spec } : undefined);
     setStatus(els.chatStatus, "Generating project files…");
     await api.materialize(projectId, plan.blueprint, "generated-app");
 
@@ -288,6 +443,7 @@ async function generatePreview() {
     buildSource.addEventListener("done", () => {
       stopBuildStream();
       const preview = api.previewUrl(projectId) + `?t=${Date.now()}`;
+      markPreviewReady(projectId);
       syncPreviewLink();
       setStatus(els.chatStatus, "Preview ready.", "ok");
       window.open(preview, "_blank", "noopener,noreferrer");
@@ -321,8 +477,29 @@ async function sendMessage() {
   const text = els.message.value.trim();
   if (!text) return;
 
-  if (!activeProjectId) {
-    setStatus(els.chatStatus, "No active project. Try creating one.", "err");
+  const projectId = await ensureProject();
+  if (!projectId) return;
+  activeProjectId = projectId;
+  syncPreviewLink();
+
+  // If we're collecting a website spec, treat this message as the answers.
+  if (isAwaitingSpec(projectId)) {
+    addBubble(els.chatLog, "user", text);
+    els.message.value = "";
+    setProjectSpec(projectId, text);
+    addBubble(
+      els.chatLog,
+      "assistant",
+      "Got it. Now click Generate to build the first version. You can also Send follow-ups to iterate.",
+    );
+    setStatus(els.chatStatus, "Spec saved.", "ok");
+    return;
+  }
+
+  if (!ensureSpecOrAsk(projectId, "chat")) {
+    addBubble(els.chatLog, "user", text);
+    els.message.value = "";
+    syncGenerateButton();
     return;
   }
 
@@ -333,7 +510,8 @@ async function sendMessage() {
     addBubble(els.chatLog, "user", text);
     els.message.value = "";
 
-    const resp = await api.projectChat(activeProjectId, text);
+    const spec = getProjectSpec(projectId);
+    const resp = await api.projectChat(projectId, text, spec ? { website_spec: spec } : undefined);
     addBubble(els.chatLog, "assistant", resp.reply);
     setStatus(els.chatStatus, "Done.", "ok");
   } catch (e) {
@@ -347,6 +525,7 @@ async function sendMessage() {
 function clearChat() {
   els.chatLog.innerHTML = "";
   setStatus(els.chatStatus, "Cleared.", "ok");
+  updateEmptyState();
 }
 
 function wireEvents() {
@@ -354,11 +533,16 @@ function wireEvents() {
   els.signOut.addEventListener("click", () => signOut());
   els.newProject.addEventListener("click", () => void newProject());
 
+  els.getStarted?.addEventListener("click", () => {
+    els.message.focus();
+  });
+
   els.projectSelect.addEventListener("change", () => {
     activeProjectId = els.projectSelect.value || null;
     if (activeProjectId) setActiveProjectId(activeProjectId);
     syncPreviewLink();
-    setStatus(els.projectStatus, "Active project updated.", "ok");
+    syncGenerateButton();
+    setStatus(els.projectStatus, "");
   });
 
   els.send.addEventListener("click", () => void sendMessage());
@@ -373,17 +557,37 @@ function wireEvents() {
   });
 }
 
+async function hydrateUsage() {
+  try {
+    const token = api.getAccessToken();
+    usageStatus = await api.getUsageStatus(token);
+  } catch {
+    // Non-fatal; treat unknown as trial.
+    usageStatus = {
+      period: "",
+      plan_tier: "trial",
+      credits_used: 0,
+      credits_limit: 0,
+      credits_remaining: 0,
+      tokens_used: 0,
+      subscribed: false,
+    };
+  }
+}
+
 async function main() {
   registerServiceWorker();
   wireEvents();
 
-  addBubble(
-    els.chatLog,
-    "assistant",
-    "Tell me what you want to build. I’ll ask a couple of clarifying questions, then you can subscribe if you want downloads.",
-  );
+  setAuthButtons(false);
+
+  updateEmptyState();
+
+  // Default: hidden until clarifying questions are asked.
+  syncGenerateButton();
 
   await hydrateUser();
+  await hydrateUsage();
   await refreshProjects();
 }
 

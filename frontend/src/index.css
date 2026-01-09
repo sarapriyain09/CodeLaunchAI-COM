@@ -3,25 +3,79 @@
 @tailwind utilities;
 
 :root {
-  --bg-deep: #070b16;
-  --bg-muted: #0f1627;
-  --accent: #ff6b5e;
-  --accent-secondary: #5de0e6;
-  --text-primary: #f5f7ff;
-  --text-muted: #9fb3c8;
-  --panel: rgba(13, 22, 45, 0.8);
-  --border: rgba(255, 255, 255, 0.08);
-  --card-glow: 0 20px 50px rgba(7, 11, 22, 0.35);
+  --bg-deep: #ffffff;
+  --bg-muted: #f5f8ff;
+  --accent: #2563eb;
+  --accent-secondary: #60a5fa;
+  --text-primary: #1e3a8a;
+  --text-muted: #3b82f6;
+  --fg: var(--text-primary);
+  --panel: rgba(255, 255, 255, 0.92);
+  --border: rgba(30, 58, 138, 0.14);
+  --card-glow: 0 20px 50px rgba(30, 58, 138, 0.12);
 }
 
 body {
   margin: 0;
   font-family: "Sora", "Space Grotesk", Inter, sans-serif;
-  background:
-    radial-gradient(circle at top, rgba(93, 224, 230, 0.18), transparent 55%) fixed,
-    radial-gradient(circle at 30% 20%, rgba(255, 107, 94, 0.25), transparent 40%) fixed,
-    var(--bg-deep);
+  background: var(--bg-deep);
   color: var(--text-primary);
+}
+
+/* Shared Lovable-like background. Apply by setting body class="lovable-bg". */
+body.lovable-bg {
+  color-scheme: light;
+
+  --bg-deep: #ffffff;
+  --bg-muted: #f6f8ff;
+  --fg: #0b1220;
+  --text-primary: var(--fg);
+  --text-muted: rgba(11, 18, 32, 0.62);
+  --panel: rgba(255, 255, 255, 0.98);
+  --border: rgba(11, 18, 32, 0.10);
+  --accent: #2563eb;
+  --accent-secondary: #60a5fa;
+  --card-glow: 0 20px 50px rgba(11, 18, 32, 0.10);
+
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, 1) 0 35%, rgba(255, 255, 255, 0) 70%),
+    radial-gradient(80% 70% at 18% 42%, rgba(59, 130, 246, 0.80) 0 35%, rgba(59, 130, 246, 0) 70%),
+    radial-gradient(80% 70% at 82% 42%, rgba(59, 130, 246, 0.80) 0 35%, rgba(59, 130, 246, 0) 70%),
+    radial-gradient(95% 70% at 50% 56%, rgba(99, 102, 241, 0.58) 0 30%, rgba(99, 102, 241, 0) 72%),
+    radial-gradient(120% 85% at 50% 92%, rgba(236, 72, 153, 0.95) 0 42%, rgba(236, 72, 153, 0) 78%),
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      #f7faff 28%,
+      #dbeafe 46%,
+      #a5b4fc 62%,
+      #f472b6 78%,
+      #ff2d84 100%
+    );
+  background-attachment: fixed;
+  color: var(--fg);
+}
+
+body.lovable-bg::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  /* Disabled: screenshot-style background is clean (no grain). */
+  opacity: 0;
+  background-image: none;
+  background-size: auto;
+}
+
+body.lovable-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
 }
 
 #root {

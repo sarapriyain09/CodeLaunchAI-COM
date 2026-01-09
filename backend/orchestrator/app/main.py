@@ -244,9 +244,35 @@ def public_home() -> RedirectResponse:
 
 
 @app.get('/subscribe.html', include_in_schema=False)
-def public_subscribe() -> FileResponse:
-    subscribe_path = _WORKSPACE_ROOT / 'subscribe.html'
-    return FileResponse(subscribe_path)
+def public_subscribe() -> RedirectResponse:
+    # Keep one canonical subscribe page under the /app/ static site.
+    return RedirectResponse(url='/app/subscribe.html')
+
+
+# Convenience redirects: avoid JSON 404s if users type these URLs directly.
+@app.get('/features.html', include_in_schema=False)
+def public_features() -> RedirectResponse:
+    return RedirectResponse(url='/app/features.html')
+
+
+@app.get('/how-it-works.html', include_in_schema=False)
+def public_how_it_works() -> RedirectResponse:
+    return RedirectResponse(url='/app/how-it-works.html')
+
+
+@app.get('/examples.html', include_in_schema=False)
+def public_examples() -> RedirectResponse:
+    return RedirectResponse(url='/app/examples.html')
+
+
+@app.get('/pricing.html', include_in_schema=False)
+def public_pricing() -> RedirectResponse:
+    return RedirectResponse(url='/app/pricing.html')
+
+
+@app.get('/support.html', include_in_schema=False)
+def public_support() -> RedirectResponse:
+    return RedirectResponse(url='/app/support.html')
 
 
 # Serve the built frontend app from the backend.

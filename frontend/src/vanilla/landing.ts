@@ -1,5 +1,8 @@
 import "../index.css";
-import "../pages/landing-legacy.css";
+import "./dashboard.css";
+import "./landing-legacy.css";
+
+import * as api from "../api/orchestrator";
 
 function scrollToId(id: string) {
   const element = document.getElementById(id);
@@ -32,6 +35,31 @@ function registerServiceWorker() {
   });
 }
 
+function wireAuthButtons() {
+  const signIn = document.getElementById("signIn") as HTMLButtonElement | null;
+  const signOut = document.getElementById("signOut") as HTMLButtonElement | null;
+  if (!signIn && !signOut) return;
+
+  const sync = () => {
+    const signedIn = Boolean(api.getAccessToken());
+    if (signIn) signIn.hidden = signedIn;
+    if (signOut) signOut.hidden = !signedIn;
+  };
+
+  signIn?.addEventListener("click", () => {
+    // Use the app page for actual sign-in flow.
+    window.location.href = "/app/";
+  });
+
+  signOut?.addEventListener("click", () => {
+    api.clearAccessToken();
+    sync();
+  });
+
+  sync();
+}
+
 wireNavScroll();
 handleScrollQueryParam();
 registerServiceWorker();
+wireAuthButtons();

@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/app/icon.svg" />
     <link rel="manifest" href="/app/manifest.webmanifest" />
-    <meta name="theme-color" content="#f7f8fb" />
+    <meta name="theme-color" content="#ffffff" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -12,7 +12,7 @@
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <title>Codlearn · Dashboard</title>
+    <title>Codlearn</title>
     <script>
       // Keep parity with frontend/index.html: public-site links should stay same-origin.
       (function () {
@@ -31,77 +31,11 @@
         window.__PUBLIC_SITE_URL__ = base;
       })();
     </script>
-    <script type="module" crossorigin src="/app/assets/dashboard-DbrE-nxQ.js"></script>
-    <link rel="modulepreload" crossorigin href="/app/assets/index-CX2xs1Uv.js">
-    <link rel="stylesheet" crossorigin href="/app/assets/index-VvDIVFBA.css">
-    <link rel="stylesheet" crossorigin href="/app/assets/dashboard-JniY_Rlu.css">
   </head>
   <body>
-    <div class="chatLayoutScreen">
-      <div class="appShell" aria-label="Chat">
-        <header class="topbar">
-          <div class="topbarTitle">
-            <div class="title">Codlearn</div>
-            <div class="subtitle">Describe your app, then generate a preview.</div>
-          </div>
-
-          <div class="topbarRight">
-            <a class="ghostBtn" href="/subscribe.html">Subscribe</a>
-            <a id="openPreview" class="ghostBtn" href="#" target="_blank" rel="noreferrer">Open preview</a>
-          </div>
-        </header>
-
-        <section class="controlPanel" aria-label="Controls">
-          <div class="controlGrid">
-            <div class="controlBlock">
-              <div class="dash-muted" id="userLine"></div>
-              <div class="twoCol">
-                <div>
-                  <label for="name">Name (optional)</label>
-                  <input id="name" type="text" placeholder="Your name" autocomplete="name" />
-                </div>
-                <div>
-                  <label for="email">Email</label>
-                  <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
-                </div>
-              </div>
-              <div class="rowLeft">
-                <button id="signIn" class="dash-btn dash-btn-primary" type="button">Sign in</button>
-                <button id="signOut" class="dash-btn" type="button">Sign out</button>
-              </div>
-              <div id="authStatus" class="dash-status" role="status"></div>
-            </div>
-
-            <div class="controlBlock">
-              <div class="twoCol">
-                <div>
-                  <label for="projectSelect">Project</label>
-                  <select id="projectSelect"></select>
-                </div>
-                <div class="rowRight">
-                  <button id="newProject" class="dash-btn" type="button">+ New project</button>
-                </div>
-              </div>
-              <div id="projectStatus" class="dash-status" role="status"></div>
-            </div>
-          </div>
-        </section>
-
-        <main class="chatArea">
-          <div id="chatLog" class="messages" aria-live="polite"></div>
-        </main>
-
-        <footer class="composerWrap">
-          <div class="composer">
-            <textarea id="message" class="input" rows="3" placeholder="Message Codlearn…"></textarea>
-            <button id="generate" class="sendBtn" type="button">Generate</button>
-            <button id="send" class="ghostBtn" type="button">Send</button>
-            <button id="clearChat" class="ghostBtn" type="button">Clear</button>
-          </div>
-          <div id="chatStatus" class="dash-status" role="status"></div>
-        </footer>
-      </div>
-    </div>
-
+    <script>
+      // Keep a single route: /app/.
+      window.location.replace("/app/");
+    </script>
   </body>
 </html>

@@ -1,6 +1,8 @@
 /* Chat-first dashboard layout (ChatGPT-like). */
 /* Simple ChatGPT-like dashboard: top menu + centered chat + centered composer. */
 
+/* Background is now shared via body.lovable-bg in src/index.css */
+
 :root {
   --dash-border: color-mix(in oklab, var(--border), transparent 20%);
   --dash-muted: color-mix(in oklab, var(--fg), transparent 35%);
@@ -9,7 +11,14 @@
 
 html,
 body {
-  height: 100%;
+  height: auto;
+  min-height: 100%;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 .srOnly {
@@ -30,6 +39,168 @@ body {
   flex-direction: column;
 }
 
+.topBar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: color-mix(in oklab, var(--panel), transparent 10%);
+  border-bottom: 1px solid color-mix(in oklab, var(--border), transparent 10%);
+  backdrop-filter: blur(10px);
+}
+
+.topStatus {
+  border-top: 1px solid color-mix(in oklab, var(--border), transparent 25%);
+  background: color-mix(in oklab, var(--panel), transparent 14%);
+}
+
+.topStatusInner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  padding: 10px 18px;
+  align-items: center;
+}
+
+.topStatusInner .userLine {
+  margin: 0;
+  font-size: 12px;
+  color: color-mix(in oklab, var(--fg), transparent 35%);
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topStatusInner .dash-status {
+  margin-top: 0;
+  font-size: 12px;
+}
+
+.topBarInner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 18px;
+}
+
+.topBrand {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 900;
+  text-decoration: none;
+  color: var(--fg);
+  letter-spacing: 0.2px;
+  font-size: 20px;
+}
+
+.topNav {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex: 1;
+  justify-content: center;
+}
+
+@media (max-width: 880px) {
+  .topNav {
+    display: none;
+  }
+  .topBarInner {
+    justify-content: space-between;
+  }
+  .topStatusInner {
+    grid-template-columns: 1fr;
+  }
+}
+
+.topNavLink {
+  text-decoration: none;
+  color: color-mix(in oklab, var(--fg), transparent 25%);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.topNavLink:hover {
+  color: var(--fg);
+}
+
+.topActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.topBtn {
+  border: 1px solid color-mix(in oklab, var(--border), transparent 10%);
+  background: color-mix(in oklab, var(--panel), transparent 14%);
+  color: var(--fg);
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.topBtn.primary {
+  border: none;
+  background: color-mix(in oklab, var(--fg), transparent 12%);
+  color: color-mix(in oklab, var(--bg-deep), transparent 2%);
+}
+
+.topBtn:hover {
+  border-color: color-mix(in oklab, var(--accent), transparent 55%);
+}
+
+.appShell {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 0;
+  min-height: 0;
+}
+
+.sideMenu {
+  border-right: 1px solid color-mix(in oklab, var(--border), transparent 10%);
+  padding: 16px 14px;
+  background: color-mix(in oklab, var(--panel), transparent 8%);
+  min-height: 0;
+}
+
+.sideSectionTitle {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--fg), transparent 50%);
+  margin: 12px 8px 10px;
+}
+
+.sideLink {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  text-decoration: none;
+  color: var(--fg);
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.sideLink:hover {
+  background: color-mix(in oklab, var(--panel), transparent 6%);
+  border-color: color-mix(in oklab, var(--border), transparent 10%);
+}
+
+.mainPane {
+  min-width: 0;
+  min-height: 0;
+}
+
 .topMenu {
   position: sticky;
   top: 0;
@@ -38,6 +209,7 @@ body {
   gap: 12px;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   padding: 12px 14px;
   border-bottom: 1px solid var(--dash-border);
   background: color-mix(in oklab, var(--panel), transparent 6%);
@@ -57,18 +229,12 @@ body {
   flex-wrap: wrap;
 }
 
-.account {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
 .userLine {
   font-size: 12px;
   color: var(--dash-muted);
-  max-width: 240px;
+  flex-basis: 100%;
+  text-align: center;
+  max-width: none;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -121,6 +287,8 @@ select:focus {
   grid-template-columns: 1fr 1fr;
   gap: 10px;
   padding: 10px 14px;
+  width: min(800px, 100%);
+  margin: 0 auto;
 }
 
 .dash-status {
@@ -142,16 +310,55 @@ select:focus {
   flex-direction: column;
   align-items: center;
   padding: 16px 14px 28px;
+  width: 100%;
+}
+
+.chatTagline {
+  width: min(800px, 100%);
+  margin: 0 auto;
+  padding: 18px 0 14px;
+  text-align: center;
+}
+
+.chatTaglineTitle {
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  font-size: clamp(34px, 5vw, 56px);
+  line-height: 1.05;
+}
+
+.chatTaglineSubtitle {
+  margin-top: 10px;
+  font-size: clamp(16px, 2vw, 22px);
+  color: var(--dash-muted);
+}
+
+.chatCenter.empty {
+  justify-content: center;
+  padding-top: 28px;
+}
+
+.chatCenter.empty .chatLog {
+  display: none;
+}
+
+.chatCenter.empty .composer {
+  margin-top: 0;
 }
 
 .chatLog {
-  width: min(900px, 100%);
-  flex: 1;
-  overflow: auto;
-  padding: 4px 0;
+  width: min(800px, 100%);
+  margin: 0 auto;
+  flex: none;
+  overflow: visible;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+
+  border: 1px solid color-mix(in oklab, var(--dash-border), transparent 10%);
+  background: color-mix(in oklab, var(--panel), transparent 0%);
+  border-radius: 18px;
 }
 
 .msg {
@@ -165,14 +372,14 @@ select:focus {
 .bubble {
   max-width: 760px;
   border: 1px solid var(--dash-border);
-  background: color-mix(in oklab, var(--panel), transparent 10%);
+  background: color-mix(in oklab, var(--panel), transparent 0%);
   border-radius: 16px;
   padding: 12px;
 }
 
 .msg.user .bubble {
   border-color: color-mix(in oklab, var(--accent), transparent 55%);
-  background: color-mix(in oklab, var(--accent), transparent 86%);
+  background: color-mix(in oklab, var(--accent), transparent 78%);
 }
 
 .meta {
@@ -190,12 +397,14 @@ select:focus {
 }
 
 .composer {
-  width: min(900px, 100%);
+  width: min(800px, 100%);
+  margin-left: auto;
+  margin-right: auto;
   margin-top: 14px;
   border: 1px solid var(--dash-border);
   border-radius: 18px;
   padding: 12px;
-  background: color-mix(in oklab, var(--panel), transparent 6%);
+  background: color-mix(in oklab, var(--panel), transparent 0%);
 }
 
 .composerInput {
@@ -203,7 +412,7 @@ select:focus {
   border: 1px solid var(--dash-border);
   border-radius: 16px;
   padding: 12px 14px;
-  background: color-mix(in oklab, var(--panel), transparent 18%);
+  background: color-mix(in oklab, var(--panel), transparent 0%);
   color: var(--fg);
   resize: vertical;
   min-height: 54px;
@@ -217,7 +426,8 @@ select:focus {
 .composerActions {
   display: flex;
   gap: 10px;
-  justify-content: flex-end;
+  justify-content: center;
+  flex-wrap: wrap;
   margin-top: 10px;
 }
 
@@ -246,6 +456,7 @@ input,
 select,
 textarea {
   width: 100%;
+  max-width: 100%;
   border-radius: 12px;
   border: 1px solid var(--border);
   background: transparent;
