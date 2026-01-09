@@ -13,7 +13,9 @@ function setStatus(el: HTMLElement, text: string, kind: StatusKind = "") {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/app/sw.js", { scope: "/app/" }).catch(() => {
+    const base = (import.meta as any).env?.BASE_URL || "/";
+    const scope = typeof base === "string" ? (base.endsWith("/") ? base : `${base}/`) : "/";
+    navigator.serviceWorker.register(`${scope}sw.js`, { scope }).catch(() => {
       // Non-fatal.
     });
   });

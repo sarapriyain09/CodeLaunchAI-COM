@@ -1,84 +1,32 @@
 {
   "headers": [
     {
-      "source": "/app/index.html",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-store" }
-      ]
+      "source": "/index.html",
+      "headers": [{ "key": "Cache-Control", "value": "no-store" }]
     },
     {
-      "source": "/app/",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-store" }
-      ]
+      "source": "/sw.js",
+      "headers": [{ "key": "Cache-Control", "value": "no-store" }]
+    },
+    {
+      "source": "/manifest.webmanifest",
+      "headers": [{ "key": "Cache-Control", "value": "no-store" }]
     }
   ],
   "redirects": [
-    {
-      "source": "/app",
-      "destination": "/app/",
-      "permanent": false
-    },
-    {
-      "source": "/previews/:path+/",
-      "destination": "/previews/:path+",
-      "permanent": false
-    },
-    {
-      "source": "/p/:path+/",
-      "destination": "/p/:path+",
-      "permanent": false
-    },
-    {
-      "source": "/preview/:path+/",
-      "destination": "/preview/:path+",
-      "permanent": false
-    }
+    { "source": "/app", "destination": "/", "permanent": false },
+    { "source": "/app/", "destination": "/", "permanent": false },
+    { "source": "/app/:path*", "destination": "/:path*", "permanent": false },
+    { "source": "/previews/:path+/", "destination": "/previews/:path+", "permanent": false },
+    { "source": "/p/:path+/", "destination": "/p/:path+", "permanent": false },
+    { "source": "/preview/:path+/", "destination": "/preview/:path+", "permanent": false }
   ],
   "rewrites": [
-    {
-      "source": "/__rewrite_test",
-      "destination": "https://codelaunchai-com-1.onrender.com/health"
-    },
-    {
-      "source": "/api",
-      "destination": "https://codelaunchai-com-1.onrender.com/"
-    },
-    {
-      "source": "/api/:path*",
-      "destination": "https://codelaunchai-com-1.onrender.com/:path*"
-    },
-    {
-      "source": "/app",
-      "destination": "/app/"
-    },
-    {
-      "source": "/app/assets/:path*",
-      "destination": "/app/assets/:path*"
-    },
-    {
-      "source": "/app/sw.js",
-      "destination": "/app/sw.js"
-    },
-    {
-      "source": "/app/manifest.webmanifest",
-      "destination": "/app/manifest.webmanifest"
-    },
-    {
-      "source": "/previews/:path*",
-      "destination": "https://codelaunchai-com-1.onrender.com/previews/:path*"
-    },
-    {
-      "source": "/p/:path*",
-      "destination": "https://codelaunchai-com-1.onrender.com/p/:path*"
-    },
-    {
-      "source": "/preview/:path*",
-      "destination": "https://codelaunchai-com-1.onrender.com/preview/:path*"
-    },
-    {
-      "source": "/assets/:path*",
-      "destination": "https://codelaunchai-com-1.onrender.com/assets/:path*"
-    }
+    { "source": "/__rewrite_test", "destination": "https://codelaunchai-com-1.onrender.com/health" },
+    { "source": "/api", "destination": "https://codelaunchai-com-1.onrender.com/" },
+    { "source": "/api/:path*", "destination": "https://codelaunchai-com-1.onrender.com/:path*" },
+    { "source": "/previews/:path*", "destination": "https://codelaunchai-com-1.onrender.com/previews/:path*" },
+    { "source": "/p/:path*", "destination": "https://codelaunchai-com-1.onrender.com/p/:path*" },
+    { "source": "/preview/:path*", "destination": "https://codelaunchai-com-1.onrender.com/preview/:path*" }
   ]
 }

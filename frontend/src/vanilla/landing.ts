@@ -29,7 +29,9 @@ function handleScrollQueryParam() {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/app/sw.js", { scope: "/app/" }).catch(() => {
+    const base = (import.meta as any).env?.BASE_URL || "/";
+    const scope = typeof base === "string" ? (base.endsWith("/") ? base : `${base}/`) : "/";
+    navigator.serviceWorker.register(`${scope}sw.js`, { scope }).catch(() => {
       // Non-fatal: installability will just be disabled.
     });
   });
@@ -48,7 +50,8 @@ function wireAuthButtons() {
 
   signIn?.addEventListener("click", () => {
     // Use the app page for actual sign-in flow.
-    window.location.href = "/app/";
+    const base = (import.meta as any).env?.BASE_URL || "/";
+    window.location.href = typeof base === "string" ? base : "/";
   });
 
   signOut?.addEventListener("click", () => {
