@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="%BASE_URL%icon.svg" />
+    <link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <title>Codlearn · Log in</title>
+    <script>
+      (function () {
+        const raw = "%VITE_PUBLIC_SITE_URL%";
+        let base = (raw || "").trim();
+        if (!base || base === "%VITE_PUBLIC_SITE_URL%") base = window.location.origin;
+        try {
+          const parsed = new URL(base, window.location.origin);
+          if (parsed.origin !== window.location.origin) base = window.location.origin;
+        } catch {
+          base = window.location.origin;
+        }
+        // @ts-ignore
+        window.__PUBLIC_SITE_URL__ = base;
+      })();
+    </script>
+  </head>
+  <body class="lovable-bg">
+    <div class="landing-legacy">
+      <div class="page-shell">
+        <header class="topBar" aria-label="Top navigation">
+          <div class="topBarInner">
+            <a class="topBrand" href="%BASE_URL%">Codlearn</a>
+
+            <nav class="topNav" aria-label="Primary">
+              <a class="topNavLink" href="%BASE_URL%">Home</a>
+              <a class="topNavLink" href="%BASE_URL%features.html">Features</a>
+              <a class="topNavLink" href="%BASE_URL%how-it-works.html">How it Works</a>
+              <a class="topNavLink" href="%BASE_URL%examples.html">Examples</a>
+              <a class="topNavLink" href="%BASE_URL%pricing.html">Pricing</a>
+              <a class="topNavLink" href="%BASE_URL%subscribe.html">Subscribe</a>
+              <a class="topNavLink" href="%BASE_URL%support.html">Support</a>
+            </nav>
+
+            <div class="topActions" aria-label="Account">
+              <button id="signIn" class="topBtn" type="button" hidden>Log in</button>
+              <button id="signOut" class="topBtn" type="button" hidden>Sign out</button>
+            </div>
+          </div>
+        </header>
+
+        <div class="site-wrap">
+          <section>
+            <h1 class="section-title">Log in</h1>
+            <p class="section-subtitle">Use your email and password to access Codlearn.</p>
+
+            <div class="authGrid" aria-label="Authentication">
+              <div class="card">
+                <div class="authTabs" role="tablist" aria-label="Auth mode">
+                  <button id="tabLogin" class="authTab" type="button" role="tab" aria-selected="true">Log in</button>
+                  <button id="tabRegister" class="authTab" type="button" role="tab" aria-selected="false">Register</button>
+                </div>
+
+                <form id="loginForm" class="authForm" autocomplete="on">
+                  <label class="authLabel" for="loginEmail">Email</label>
+                  <input id="loginEmail" class="authInput" type="email" autocomplete="email" required />
+
+                  <label class="authLabel" for="loginPassword">Password</label>
+                  <input id="loginPassword" class="authInput" type="password" autocomplete="current-password" required />
+
+                  <button id="loginSubmit" class="cta primary authSubmit" type="submit">Log in</button>
+
+                  <div class="authHint">
+                    Don’t have an account?
+                    <button id="goRegister" class="authLink" type="button">Register</button>
+                  </div>
+                </form>
+
+                <form id="registerForm" class="authForm" autocomplete="on" hidden>
+                  <div class="authRow">
+                    <div>
+                      <label class="authLabel" for="firstName">Name</label>
+                      <input id="firstName" class="authInput" type="text" autocomplete="given-name" required />
+                    </div>
+                    <div>
+                      <label class="authLabel" for="lastName">Surname</label>
+                      <input id="lastName" class="authInput" type="text" autocomplete="family-name" required />
+                    </div>
+                  </div>
+
+                  <label class="authLabel" for="registerEmail">Email</label>
+                  <input id="registerEmail" class="authInput" type="email" autocomplete="email" required />
+
+                  <label class="authLabel" for="registerPassword">Password</label>
+                  <input id="registerPassword" class="authInput" type="password" autocomplete="new-password" minlength="8" required />
+
+                  <button id="registerSubmit" class="cta primary authSubmit" type="submit">Create account</button>
+
+                  <div class="authHint">
+                    Already have an account?
+                    <button id="goLogin" class="authLink" type="button">Log in</button>
+                  </div>
+                </form>
+
+                <div id="formStatus" class="dash-status" role="status" aria-live="polite"></div>
+              </div>
+
+              <div class="card" aria-label="Why register">
+                <h3>New here?</h3>
+                <p>Register once, then sign in anytime from any device.</p>
+                <p><strong>Tip:</strong> Use at least 8 characters for your password.</p>
+              </div>
+            </div>
+          </section>
+
+          <footer>
+            <div>© 2026 Codlearn</div>
+            <ul>
+              <li><a href="%BASE_URL%support.html">Support</a></li>
+              <li><a href="%BASE_URL%pricing.html">Pricing</a></li>
+              <li><a href="%BASE_URL%">App</a></li>
+            </ul>
+          </footer>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/vanilla/login.ts"></script>
+  </body>
+</html>

@@ -24,6 +24,7 @@ export default defineConfig(({ mode }) => {
         input: {
           index: resolve(__dirname, 'index.html'),
           dashboard: resolve(__dirname, 'dashboard.html'),
+          login: resolve(__dirname, 'login.html'),
           subscribe: resolve(__dirname, 'subscribe.html'),
           features: resolve(__dirname, 'features.html'),
           howItWorks: resolve(__dirname, 'how-it-works.html'),

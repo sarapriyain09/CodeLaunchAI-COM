@@ -12,6 +12,18 @@ class GuestAuthRequest(BaseModel):
     name: str | None = Field(default=None, max_length=120)
 
 
+class EmailPasswordLoginRequest(BaseModel):
+    email: str = Field(min_length=5)
+    password: str = Field(min_length=8, max_length=256)
+
+
+class EmailPasswordRegisterRequest(BaseModel):
+    first_name: str = Field(min_length=1, max_length=80)
+    last_name: str = Field(min_length=1, max_length=80)
+    email: str = Field(min_length=5)
+    password: str = Field(min_length=8, max_length=256)
+
+
 class UserPublic(BaseModel):
     id: str
     email: str

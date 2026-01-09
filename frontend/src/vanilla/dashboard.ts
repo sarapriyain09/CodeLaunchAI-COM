@@ -271,31 +271,9 @@ async function refreshProjects() {
 }
 
 async function signIn() {
-  const emailRaw = window.prompt("Email:") ?? "";
-  const email = emailRaw.trim();
-  if (!email) return;
-  const nameRaw = window.prompt("Name (optional):") ?? "";
-  const name = nameRaw.trim() || null;
-
-  els.signIn.disabled = true;
-  setStatus(els.authStatus, "Signing in…");
-
-  try {
-    const resp = await api.authGuest({ email, name });
-    api.setAccessToken(resp.access_token);
-    setStatus(els.authStatus, "Signed in.", "ok");
-    els.userLine.textContent = resp.user.email;
-    setAuthButtons(true);
-
-    await hydrateUsage();
-    await refreshProjects();
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    setStatus(els.authStatus, `Sign in failed: ${msg}`, "err");
-    setAuthButtons(false);
-  } finally {
-    els.signIn.disabled = false;
-  }
+  const base = (import.meta as any).env?.BASE_URL || "/";
+  const scope = typeof base === "string" ? (base.endsWith("/") ? base : `${base}/`) : "/";
+  window.location.href = `${scope}login.html`;
 }
 
 async function hydrateUser() {

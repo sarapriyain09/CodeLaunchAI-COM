@@ -157,6 +157,25 @@ export async function authGuest(payload: { email: string; name: string | null })
   });
 }
 
+export async function authLogin(payload: { email: string; password: string }) {
+  return http<AuthResponse>("/auth/login", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function authRegister(payload: {
+  first_name: string;
+  last_name: string;
+  email: string;
+  password: string;
+}) {
+  return http<AuthResponse>("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function me(token: string) {
   const response = await fetch(`${ORCH_BASE}/me`, {
     headers: {

@@ -49,9 +49,9 @@ function wireAuthButtons() {
   };
 
   signIn?.addEventListener("click", () => {
-    // Use the app page for actual sign-in flow.
     const base = (import.meta as any).env?.BASE_URL || "/";
-    window.location.href = typeof base === "string" ? base : "/";
+    const scope = typeof base === "string" ? (base.endsWith("/") ? base : `${base}/`) : "/";
+    window.location.href = `${scope}login.html`;
   });
 
   signOut?.addEventListener("click", () => {
