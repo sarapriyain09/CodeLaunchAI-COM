@@ -107,12 +107,33 @@ body {
 }
 
 @media (max-width: 880px) {
+  .topBarInner {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
   .topNav {
+    order: 3;
+    flex: 0 0 100%;
+    justify-content: flex-start;
+    gap: 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 8px 0 4px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .topNav::-webkit-scrollbar {
     display: none;
   }
-  .topBarInner {
-    justify-content: space-between;
+
+  .topNavLink {
+    white-space: nowrap;
+    font-size: 13px;
   }
+
   .topStatusInner {
     grid-template-columns: 1fr;
   }
@@ -161,6 +182,16 @@ body {
   grid-template-columns: 260px 1fr;
   gap: 0;
   min-height: 0;
+}
+
+@media (max-width: 880px) {
+  .appShell {
+    grid-template-columns: 1fr;
+  }
+  .sideMenu {
+    border-right: none;
+    border-bottom: 1px solid color-mix(in oklab, var(--border), transparent 10%);
+  }
 }
 
 .sideMenu {

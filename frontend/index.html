@@ -59,36 +59,49 @@
 
       </header>
 
-      <main class="chatCenter" aria-label="Chat">
-        <div class="chatTagline" aria-label="Tagline">
-          <div class="chatTaglineTitle">Build something and Learn</div>
-          <div class="chatTaglineSubtitle">Create apps and websites by chatting with AI</div>
-        </div>
+      <div class="appShell" aria-label="App">
+        <aside id="leftPanel" class="sideMenu" aria-label="Project status" hidden>
+          <div class="sideSectionTitle">Account</div>
+          <div id="userLine" class="userLine"></div>
+          <div id="authStatus" class="dash-status" role="status"></div>
 
-        <div id="chatLog" class="chatLog" aria-live="polite"></div>
+          <div class="sideSectionTitle">Project</div>
+          <div id="projectStatus" class="dash-status" role="status"></div>
+        </aside>
 
-        <div class="composer">
-          <textarea
-            id="message"
-            class="composerInput"
-            rows="3"
-            placeholder="Message Codlearn… (Ctrl+Enter to send)"
-          ></textarea>
-          <div class="composerActions">
-            <button id="generate" class="btn primary" type="button">Generate</button>
-            <button id="send" class="btn" type="button">Send</button>
-            <button id="clearChat" class="btn" type="button">Clear</button>
-          </div>
-          <div id="chatStatus" class="dash-status" role="status"></div>
-        </div>
+        <div class="mainPane">
+          <main class="chatCenter" aria-label="Chat">
+            <div class="chatTagline" aria-label="Tagline">
+              <div class="chatTaglineTitle">Build something and Learn</div>
+              <div class="chatTaglineSubtitle">Create apps and websites by chatting with AI</div>
+            </div>
 
-        <!-- Hidden project controls (kept for app logic) -->
-        <div style="display: none" aria-hidden="true">
-          <label for="projectSelect">Project</label>
-          <select id="projectSelect"></select>
-          <button id="newProject" type="button">New</button>
+            <div id="chatLog" class="chatLog" aria-live="polite"></div>
+
+            <div class="composer">
+              <textarea
+                id="message"
+                class="composerInput"
+                rows="3"
+                placeholder="Message Codlearn… (Ctrl+Enter to send)"
+              ></textarea>
+              <div class="composerActions">
+                <button id="send" class="btn" type="button">Send</button>
+                <button id="clearChat" class="btn" type="button">Clear</button>
+                <button id="generate" class="btn primary" type="button">Generate</button>
+              </div>
+              <div id="chatStatus" class="dash-status" role="status"></div>
+            </div>
+
+            <!-- Hidden project controls (kept for app logic) -->
+            <div style="display: none" aria-hidden="true">
+              <label for="projectSelect">Project</label>
+              <select id="projectSelect"></select>
+              <button id="newProject" type="button">New</button>
+            </div>
+          </main>
         </div>
-      </main>
+      </div>
     </div>
 
     <script type="module" src="/src/vanilla/dashboard.ts"></script>
