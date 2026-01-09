@@ -227,13 +227,21 @@ body {
 .appShell {
   flex: 1;
   display: grid;
-  grid-template-columns: 260px 1fr;
+  /* Default: no sidebar column unless user is signed in. */
+  grid-template-columns: 1fr;
   gap: 0;
   min-height: 0;
 }
 
+.appShell.withSidebar {
+  grid-template-columns: 260px 1fr;
+}
+
 @media (max-width: 880px) {
   .appShell {
+    grid-template-columns: 1fr;
+  }
+  .appShell.withSidebar {
     grid-template-columns: 1fr;
   }
   .sideMenu {
