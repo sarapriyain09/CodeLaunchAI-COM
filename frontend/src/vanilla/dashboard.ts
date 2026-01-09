@@ -216,9 +216,6 @@ function setAuthButtons(signedIn: boolean) {
   els.signIn.hidden = signedIn;
   els.signOut.hidden = !signedIn;
   if (els.leftPanel) els.leftPanel.hidden = !signedIn;
-
-  const appShell = document.querySelector(".appShell") as HTMLElement | null;
-  if (appShell) appShell.classList.toggle("withSidebar", signedIn);
 }
 
 function getActiveProjectId(): string | null {

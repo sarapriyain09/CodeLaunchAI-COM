@@ -227,21 +227,14 @@ body {
 .appShell {
   flex: 1;
   display: grid;
-  /* Default: no sidebar column unless user is signed in. */
-  grid-template-columns: 1fr;
+  /* Sidebar column collapses to 0 when the aside is hidden. */
+  grid-template-columns: minmax(0, 260px) 1fr;
   gap: 0;
   min-height: 0;
 }
 
-.appShell.withSidebar {
-  grid-template-columns: 260px 1fr;
-}
-
 @media (max-width: 880px) {
   .appShell {
-    grid-template-columns: 1fr;
-  }
-  .appShell.withSidebar {
     grid-template-columns: 1fr;
   }
   .sideMenu {
@@ -254,8 +247,10 @@ body {
   border-right: 1px solid color-mix(in oklab, var(--border), transparent 10%);
   padding: 16px 14px;
   background: color-mix(in oklab, var(--panel), transparent 8%);
+  width: 260px;
   min-height: 0;
 }
+
 
 .sideSectionTitle {
   font-size: 12px;
