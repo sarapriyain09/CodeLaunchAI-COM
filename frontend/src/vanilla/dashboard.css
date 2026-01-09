@@ -8,21 +8,28 @@
   --dash-muted: color-mix(in oklab, var(--fg), transparent 35%);
   --dash-ring: color-mix(in oklab, var(--accent), transparent 55%);
   /* Responsive content sizing: keep mobile comfy, let desktop breathe. */
-  --dash-content-max: 800px;
-  --dash-bubble-max: 760px;
+  --dash-content-max: 900px;
+  --dash-bubble-max: 860px;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 900px) {
   :root {
-    --dash-content-max: 1040px;
-    --dash-bubble-max: 980px;
+    --dash-content-max: 1120px;
+    --dash-bubble-max: 1040px;
   }
 }
 
-@media (min-width: 1280px) {
+@media (min-width: 1200px) {
   :root {
-    --dash-content-max: 1160px;
-    --dash-bubble-max: 1100px;
+    --dash-content-max: 1320px;
+    --dash-bubble-max: 1240px;
+  }
+}
+
+@media (min-width: 1536px) {
+  :root {
+    --dash-content-max: 1480px;
+    --dash-bubble-max: 1400px;
   }
 }
 
