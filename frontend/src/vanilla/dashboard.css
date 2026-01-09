@@ -7,6 +7,23 @@
   --dash-border: color-mix(in oklab, var(--border), transparent 20%);
   --dash-muted: color-mix(in oklab, var(--fg), transparent 35%);
   --dash-ring: color-mix(in oklab, var(--accent), transparent 55%);
+  /* Responsive content sizing: keep mobile comfy, let desktop breathe. */
+  --dash-content-max: 800px;
+  --dash-bubble-max: 760px;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --dash-content-max: 1040px;
+    --dash-bubble-max: 980px;
+  }
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --dash-content-max: 1160px;
+    --dash-bubble-max: 1100px;
+  }
 }
 
 html,
@@ -157,6 +174,37 @@ body {
   border-radius: 12px;
   cursor: pointer;
   font-weight: 700;
+}
+
+.installBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.installBannerText {
+  min-width: 0;
+}
+
+.installBannerTitle {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.installBannerSub {
+  opacity: 0.85;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.installBannerActions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 .topBtn.primary {
@@ -338,7 +386,7 @@ select:focus {
 }
 
 .chatTagline {
-  width: min(800px, 100%);
+  width: min(var(--dash-content-max), 100%);
   margin: 0 auto;
   padding: 18px 0 14px;
   text-align: center;
@@ -371,7 +419,7 @@ select:focus {
 }
 
 .chatLog {
-  width: min(800px, 100%);
+  width: min(var(--dash-content-max), 100%);
   margin: 0 auto;
   flex: none;
   overflow: visible;
@@ -394,7 +442,7 @@ select:focus {
 }
 
 .bubble {
-  max-width: 760px;
+  max-width: var(--dash-bubble-max);
   border: 1px solid var(--dash-border);
   background: color-mix(in oklab, var(--panel), transparent 0%);
   border-radius: 16px;
@@ -421,7 +469,7 @@ select:focus {
 }
 
 .composer {
-  width: min(800px, 100%);
+  width: min(var(--dash-content-max), 100%);
   margin-left: auto;
   margin-right: auto;
   margin-top: 14px;

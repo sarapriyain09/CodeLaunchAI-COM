@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/app/icon.svg" />
+    <link rel="manifest" href="/app/manifest.webmanifest" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <title>Codlearn · Features</title>
+    <script>
+      (function () {
+        const raw = "http://127.0.0.1:7080";
+        let base = (raw || "").trim();
+        if (!base || base === "http://127.0.0.1:7080") base = window.location.origin;
+        try {
+          const parsed = new URL(base, window.location.origin);
+          if (parsed.origin !== window.location.origin) base = window.location.origin;
+        } catch {
+          base = window.location.origin;
+        }
+        // @ts-ignore
+        window.__PUBLIC_SITE_URL__ = base;
+      })();
+    </script>
+    <script type="module" crossorigin src="/app/assets/orchestrator-BCLLh1Rf.js"></script>
+    <script type="module" crossorigin src="/app/assets/landing-zGzi7J8Y.js"></script>
+    <link rel="stylesheet" crossorigin href="/app/assets/orchestrator-CRmbDAw2.css">
+    <link rel="stylesheet" crossorigin href="/app/assets/landing-legacy-CycfTUuC.css">
+  </head>
+  <body class="lovable-bg">
+    <div class="landing-legacy">
+      <div class="page-shell">
+        <header class="topBar" aria-label="Top navigation">
+          <div class="topBarInner">
+            <a class="topBrand" href="/app/">Codlearn</a>
+
+            <nav class="topNav" aria-label="Primary">
+              <a class="topNavLink" href="/app/">Home</a>
+              <a class="topNavLink" href="/app/features.html">Features</a>
+              <a class="topNavLink" href="/app/how-it-works.html">How it Works</a>
+              <a class="topNavLink" href="/app/examples.html">Examples</a>
+              <a class="topNavLink" href="/app/pricing.html">Pricing</a>
+              <a class="topNavLink" href="/app/subscribe.html">Subscribe</a>
+              <a class="topNavLink" href="/app/support.html">Support</a>
+            </nav>
+
+            <div class="topActions" aria-label="Account">
+              <button id="signIn" class="topBtn" type="button">Log in</button>
+              <button id="signOut" class="topBtn" type="button" hidden>Sign out</button>
+            </div>
+          </div>
+        </header>
+
+        <div class="site-wrap">
+
+          <section>
+            <h1 class="section-title">Features</h1>
+            <p class="section-subtitle">A launch-ready stack for building and learning by doing.</p>
+
+            <div class="feature-grid">
+              <div class="card">
+                <div class="icon-circle">⚙️</div>
+                <h3>Full-stack scaffolding</h3>
+                <p>Generates UI, APIs, and data models that you can edit immediately.</p>
+              </div>
+              <div class="card">
+                <div class="icon-circle">💳</div>
+                <h3>Payments + subscriptions</h3>
+                <p>Billing flows designed for subscription products with clear upgrade paths.</p>
+              </div>
+              <div class="card">
+                <div class="icon-circle">🧭</div>
+                <h3>Guided building</h3>
+                <p>Practical guidance so you understand what was created and why.</p>
+              </div>
+              <div class="card">
+                <div class="icon-circle">⚡</div>
+                <h3>Fast preview loop</h3>
+                <p>Generate, preview, iterate, and ship with minimal friction.</p>
+              </div>
+              <div class="card">
+                <div class="icon-circle">🔒</div>
+                <h3>Auth-ready</h3>
+                <p>Sign-in and sessions supported so projects can be truly multi-user.</p>
+              </div>
+              <div class="card">
+                <div class="icon-circle">🧰</div>
+                <h3>Developer-friendly output</h3>
+                <p>Structured code you can extend without fighting the framework.</p>
+              </div>
+            </div>
+          </section>
+
+          <footer>
+            <div>© 2026 Codlearn</div>
+            <ul>
+              <li><a href="/app/support.html">Support</a></li>
+              <li><a href="/app/pricing.html">Pricing</a></li>
+              <li><a href="/app/">App</a></li>
+            </ul>
+          </footer>
+        </div>
+      </div>
+    </div>
+
+  </body>
+</html>

@@ -2,19 +2,507 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/app/icon.svg" />
+    <link rel="manifest" href="/app/manifest.webmanifest" />
+    <meta name="theme-color" content="#ffffff" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Redirecting…</title>
-    <meta http-equiv="refresh" content="0; url=/subscribe.html" />
-    <script>
-      // Safety redirect: if someone hits /app/subscribe.html (Vite base), send them to the public page at /subscribe.html.
-      const target = '/subscribe.html' + (window.location.search || '');
-      window.location.replace(target);
-    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <title>Codlearn · Subscribe</title>
+    <style>
+      :root {
+        --bg-deep: #ffffff;
+        --bg-muted: #f6f8ff;
+        --fg: #0b1220;
+        --text-primary: var(--fg);
+        --text-muted: rgba(11, 18, 32, 0.62);
+        --panel: rgba(255, 255, 255, 0.82);
+        --border: rgba(11, 18, 32, 0.10);
+        --accent: #2563eb;
+        --accent-secondary: #60a5fa;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: "Sora", "Space Grotesk", Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+          Arial;
+        color: var(--text-primary);
+        background: var(--bg-deep);
+      }
+
+      body.lovable-bg {
+        color-scheme: light;
+        position: relative;
+        min-height: 100vh;
+        background:
+          radial-gradient(140% 62% at 18% 52%, rgba(37, 99, 235, 0.16) 0 40%, transparent 62%) fixed,
+          radial-gradient(140% 62% at 82% 58%, rgba(99, 102, 241, 0.18) 0 38%, transparent 63%) fixed,
+          radial-gradient(130% 58% at 10% 84%, rgba(236, 72, 153, 0.22) 0 40%, transparent 66%) fixed,
+          radial-gradient(130% 58% at 90% 92%, rgba(236, 72, 153, 0.26) 0 42%, transparent 68%) fixed,
+          linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #ffffff 24%,
+            rgba(96, 165, 250, 0.35) 48%,
+            rgba(37, 99, 235, 0.35) 62%,
+            rgba(236, 72, 153, 0.95) 100%
+          ),
+          var(--bg-deep);
+      }
+      body.lovable-bg::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.22;
+        background:
+          linear-gradient(to right, rgba(11, 18, 32, 0.06) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(11, 18, 32, 0.06) 1px, transparent 1px);
+        background-size: 140px 140px;
+        -webkit-mask-image: radial-gradient(circle at 50% 0%, #000, #0000 70%);
+                mask-image: radial-gradient(circle at 50% 0%, #000, #0000 70%);
+      }
+      body.lovable-bg::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          linear-gradient(180deg, transparent 58%, rgba(236, 72, 153, 0.92) 100%),
+          radial-gradient(
+            120% 38% at 18% 68%,
+            rgba(236, 72, 153, 0) 0 44%,
+            rgba(37, 99, 235, 0.22) 60%,
+            transparent 74%
+          ),
+          radial-gradient(
+            120% 40% at 55% 66%,
+            rgba(236, 72, 153, 0) 0 45%,
+            rgba(96, 165, 250, 0.2) 60%,
+            transparent 75%
+          ),
+          radial-gradient(
+            120% 40% at 86% 70%,
+            rgba(236, 72, 153, 0) 0 44%,
+            rgba(37, 99, 235, 0.18) 60%,
+            transparent 76%
+          );
+        opacity: 0.95;
+      }
+
+      .appFrame {
+        position: relative;
+        z-index: 1;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .topBar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: color-mix(in oklab, var(--panel), transparent 10%);
+        border-bottom: 1px solid color-mix(in oklab, var(--border), transparent 10%);
+        backdrop-filter: blur(10px);
+      }
+      .topBarInner {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 14px 18px;
+      }
+      .topBrand {
+        display: inline-flex;
+        align-items: center;
+        font-weight: 900;
+        text-decoration: none;
+        color: var(--fg);
+        letter-spacing: 0.2px;
+        font-size: 20px;
+      }
+      .topNav {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        flex: 1;
+        justify-content: center;
+      }
+      @media (max-width: 880px) {
+        .topNav {
+          display: none;
+        }
+      }
+      .topNavLink {
+        text-decoration: none;
+        color: color-mix(in oklab, var(--fg), transparent 25%);
+        font-weight: 600;
+        font-size: 14px;
+      }
+      .topNavLink:hover {
+        color: var(--fg);
+      }
+      .topActions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .topBtn {
+        border: 1px solid color-mix(in oklab, var(--border), transparent 10%);
+        background: color-mix(in oklab, var(--panel), transparent 14%);
+        color: var(--fg);
+        padding: 10px 14px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 700;
+        text-decoration: none;
+      }
+      .topBtn:hover {
+        border-color: color-mix(in oklab, var(--accent), transparent 55%);
+      }
+
+      .shell {
+        max-width: 920px;
+        margin: 0 auto;
+        padding: 28px 18px 48px;
+      }
+
+      .card {
+        margin-top: 18px;
+        border: 1px solid var(--border);
+        background: var(--panel);
+        border-radius: 16px;
+        padding: 18px;
+      }
+      h1 {
+        margin: 0 0 6px;
+        font-size: 28px;
+      }
+      p {
+        margin: 0;
+        color: var(--text-muted);
+        line-height: 1.5;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-top: 16px;
+      }
+      @media (min-width: 760px) {
+        .grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      label {
+        display: block;
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-bottom: 6px;
+      }
+      input,
+      select {
+        width: 100%;
+        height: 42px;
+        padding: 0 12px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: color-mix(in oklab, var(--panel), transparent 10%);
+        color: var(--text-primary);
+        outline: none;
+      }
+
+      .row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: flex-end;
+        margin-top: 14px;
+      }
+      .btn {
+        height: 42px;
+        padding: 0 14px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: color-mix(in oklab, var(--panel), transparent 14%);
+        color: var(--text-primary);
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .btn.primary {
+        border: none;
+        background: color-mix(in oklab, var(--fg), transparent 12%);
+        color: color-mix(in oklab, var(--bg-deep), transparent 2%);
+      }
+      .btn:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .status {
+        margin-top: 12px;
+        font-size: 13px;
+        color: var(--text-muted);
+        min-height: 18px;
+      }
+      .status.ok {
+        color: #1f8a6a;
+      }
+      .status.err {
+        color: #b42318;
+      }
+
+      .tiny {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 8px;
+      }
+    </style>
   </head>
-  <body style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; padding: 18px;">
-    <p>
-      Redirecting to the subscribe page…
-      <a href="/subscribe.html">Continue</a>
-    </p>
+  <body class="lovable-bg">
+    <div class="appFrame">
+      <header class="topBar" aria-label="Top navigation">
+        <div class="topBarInner">
+          <a class="topBrand" href="/app/">Codlearn</a>
+
+          <nav class="topNav" aria-label="Primary">
+            <a class="topNavLink" href="/app/">Home</a>
+            <a class="topNavLink" href="/app/features.html">Features</a>
+            <a class="topNavLink" href="/app/how-it-works.html">How it Works</a>
+            <a class="topNavLink" href="/app/examples.html">Examples</a>
+            <a class="topNavLink" href="/app/pricing.html">Pricing</a>
+            <a class="topNavLink" href="/app/subscribe.html">Subscribe</a>
+            <a class="topNavLink" href="/app/support.html">Support</a>
+          </nav>
+
+          <div class="topActions" aria-label="Account">
+            <button id="signIn" class="topBtn" type="button">Log in</button>
+            <button id="signOut" class="topBtn" type="button" hidden>Sign out</button>
+          </div>
+        </div>
+      </header>
+
+      <div class="shell">
+        <div class="card">
+          <h1>Subscribe</h1>
+          <p>
+            Create your account and choose a plan. Every new account starts with a free trial (10 AI credits / 14 days).
+            After payment, you’ll also be able to download ZIP exports.
+          </p>
+
+          <div class="grid" style="margin-top: 14px">
+            <div>
+              <label for="name">Name (optional)</label>
+              <input id="name" type="text" placeholder="Your name" />
+            </div>
+            <div>
+              <label for="email">Email</label>
+              <input id="email" type="email" placeholder="you@example.com" />
+            </div>
+
+            <div>
+              <label for="plan">Plan</label>
+              <select id="plan">
+                <option value="student">Student (50 AI credits/month)</option>
+                <option value="pro" selected>Pro (300 AI credits/month)</option>
+              </select>
+            </div>
+            <div>
+              <label for="interval">Billing</label>
+              <select id="interval">
+                <option value="month" selected>Monthly</option>
+                <option value="year">Yearly</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <button id="cancel" class="btn" type="button">Cancel</button>
+            <button id="subscribe" class="btn primary" type="button">Continue to Checkout</button>
+          </div>
+
+          <div id="status" class="status"></div>
+          <div class="tiny">
+            AI credits reset monthly. Trial: 10 credits over 14 days. Student: 50 credits/month. Pro: 300 credits/month.
+            Already paid? After Stripe redirects back, this page will show confirmation.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Must match frontend TOKEN_KEY in frontend/src/api/orchestrator.ts
+      const TOKEN_KEY = 'cla_access_token';
+
+      function syncAuthButtons() {
+        const token = (() => {
+          try {
+            return window.localStorage.getItem(TOKEN_KEY);
+          } catch {
+            return null;
+          }
+        })();
+
+        const signInBtn = document.getElementById('signIn');
+        const signOutBtn = document.getElementById('signOut');
+        if (signInBtn) signInBtn.hidden = Boolean(token);
+        if (signOutBtn) signOutBtn.hidden = !token;
+      }
+
+      document.getElementById('signIn')?.addEventListener('click', () => {
+        window.location.href = '/app/';
+      });
+
+      document.getElementById('signOut')?.addEventListener('click', () => {
+        try {
+          window.localStorage.removeItem(TOKEN_KEY);
+        } catch {
+          // ignore
+        }
+        syncAuthButtons();
+      });
+
+      // Vite-injected env (optional). If not set, default to same-origin for local and /api for prod.
+      function normalizeBaseUrl(raw) {
+        const trimmed = String(raw || '').trim();
+        if (!trimmed) return '';
+        return trimmed.replace('://localhost', '://127.0.0.1');
+      }
+
+      function defaultOrchBase() {
+        const origin = window.location.origin;
+        const isLocal = origin.includes('127.0.0.1') || origin.includes('localhost');
+        if (isLocal) return origin;
+        return origin.replace('://localhost', '://127.0.0.1') + '/api';
+      }
+
+      function chooseOrchBase() {
+        const raw = '';
+        const envBase = normalizeBaseUrl(raw);
+        if (envBase && envBase !== '') return envBase;
+        return defaultOrchBase();
+      }
+
+      const ORCH_BASE = chooseOrchBase();
+
+      const statusEl = document.getElementById('status');
+      const nameEl = document.getElementById('name');
+      const emailEl = document.getElementById('email');
+      const planEl = document.getElementById('plan');
+      const intervalEl = document.getElementById('interval');
+      const subscribeBtn = document.getElementById('subscribe');
+      const cancelBtn = document.getElementById('cancel');
+
+      function setStatus(text, kind) {
+        statusEl.textContent = text || '';
+        statusEl.className = 'status' + (kind ? ' ' + kind : '');
+      }
+
+      function setBusy(isBusy) {
+        subscribeBtn.disabled = isBusy;
+        cancelBtn.disabled = isBusy;
+        nameEl.disabled = isBusy;
+        emailEl.disabled = isBusy;
+        planEl.disabled = isBusy;
+        intervalEl.disabled = isBusy;
+      }
+
+      function initFromQuery() {
+        const params = new URLSearchParams(window.location.search);
+        const plan = params.get('plan');
+        const interval = params.get('interval');
+        if (plan === 'student' || plan === 'pro') planEl.value = plan;
+        if (interval === 'month' || interval === 'year') intervalEl.value = interval;
+
+        if (params.get('subscribed') === '1') {
+          setStatus('Subscription activated. You can return to the builder and download.', 'ok');
+        } else if (params.get('canceled') === '1') {
+          setStatus('Checkout canceled. You can try again any time.', 'err');
+        }
+      }
+
+      async function postJson(url, body, headers) {
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(headers || {}),
+          },
+          body: JSON.stringify(body || {}),
+        });
+        const text = await resp.text().catch(() => '');
+        if (!resp.ok) {
+          throw new Error(`HTTP ${resp.status} ${resp.statusText}: ${text.slice(0, 500)}`);
+        }
+        return text ? JSON.parse(text) : {};
+      }
+
+      cancelBtn.addEventListener('click', () => {
+        window.location.href = '/app/';
+      });
+
+      subscribeBtn.addEventListener('click', async () => {
+        const email = (emailEl.value || '').trim();
+        const name = (nameEl.value || '').trim();
+        const plan = planEl.value;
+        const interval = intervalEl.value;
+
+        if (!email) {
+          setStatus('Email is required.', 'err');
+          return;
+        }
+
+        try {
+          setBusy(true);
+          setStatus('Creating account…');
+
+          const auth = await postJson(`${ORCH_BASE}/auth/guest`, { email, name: name || null });
+          const token = auth && auth.access_token;
+          if (!token) throw new Error('Missing access_token');
+
+          // Persist token so the builder can download after checkout returns.
+          try {
+            window.localStorage.setItem(TOKEN_KEY, token);
+          } catch {
+            // Non-fatal; downloads may require re-auth.
+          }
+
+          syncAuthButtons();
+
+          setStatus('Starting checkout…');
+          const checkout = await postJson(
+            `${ORCH_BASE}/billing/checkout-session`,
+            { plan, interval },
+            { Authorization: `Bearer ${token}` },
+          );
+
+          if (checkout.already_subscribed) {
+            setStatus('Subscription already active. You can return to the builder.', 'ok');
+            return;
+          }
+          if (!checkout.url) throw new Error('Missing checkout URL');
+
+          window.location.href = checkout.url;
+        } catch (e) {
+          setStatus(String(e && e.message ? e.message : e), 'err');
+        } finally {
+          setBusy(false);
+        }
+      });
+
+      initFromQuery();
+      syncAuthButtons();
+    </script>
   </body>
 </html>

@@ -5,6 +5,12 @@ import * as api from "../api/orchestrator";
 
 type StatusKind = "" | "ok" | "err";
 
+// Minimal typing for the PWA install prompt event (Chrome/Edge on Android).
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+};
+
 function setStatus(el: HTMLElement, text: string, kind: StatusKind = "") {
   el.textContent = text;
   el.className = "dash-status" + (kind ? ` ${kind}` : "");
@@ -17,6 +23,124 @@ function registerServiceWorker() {
     const scope = typeof base === "string" ? (base.endsWith("/") ? base : `${base}/`) : "/";
     navigator.serviceWorker.register(`${scope}sw.js`, { scope }).catch(() => {
       // Non-fatal.
+    });
+  });
+}
+
+const PWA_INSTALL_DISMISSED_KEY = "cla_pwa_install_dismissed";
+
+function isStandaloneDisplayMode(): boolean {
+  // iOS Safari uses navigator.standalone.
+  const anyNav = navigator as unknown as { standalone?: boolean };
+  return (
+    window.matchMedia?.("(display-mode: standalone)")?.matches === true ||
+    window.matchMedia?.("(display-mode: minimal-ui)")?.matches === true ||
+    anyNav.standalone === true
+  );
+}
+
+function isMobileLike(): boolean {
+  const ua = navigator.userAgent || "";
+  const uaMobile = /Android|iPhone|iPad|iPod|Mobi/i.test(ua);
+  const narrow = window.matchMedia?.("(max-width: 880px)")?.matches ?? false;
+  return uaMobile || narrow;
+}
+
+function isIOS(): boolean {
+  const ua = navigator.userAgent || "";
+  return /iPhone|iPad|iPod/i.test(ua);
+}
+
+function showInstallBanner(opts: {
+  title: string;
+  subtitle: string;
+  primaryLabel: string;
+  secondaryLabel: string;
+  onPrimary: () => void;
+  onSecondary: () => void;
+}) {
+  const header = document.querySelector(".topBar") as HTMLElement | null;
+  if (!header) return;
+
+  if (document.getElementById("installBanner")) return;
+
+  const banner = document.createElement("div");
+  banner.id = "installBanner";
+  banner.className = "installBanner";
+  banner.setAttribute("role", "region");
+  banner.setAttribute("aria-label", "Install Codlearn");
+
+  banner.innerHTML = `
+    <div class="installBannerText">
+      <div class="installBannerTitle"></div>
+      <div class="installBannerSub"></div>
+    </div>
+    <div class="installBannerActions">
+      <button id="installPrimary" class="topBtn primary" type="button"></button>
+      <button id="installSecondary" class="topBtn" type="button"></button>
+    </div>
+  `;
+
+  (banner.querySelector(".installBannerTitle") as HTMLDivElement).textContent = opts.title;
+  (banner.querySelector(".installBannerSub") as HTMLDivElement).textContent = opts.subtitle;
+  (banner.querySelector("#installPrimary") as HTMLButtonElement).textContent = opts.primaryLabel;
+  (banner.querySelector("#installSecondary") as HTMLButtonElement).textContent = opts.secondaryLabel;
+
+  (banner.querySelector("#installPrimary") as HTMLButtonElement).addEventListener("click", opts.onPrimary);
+  (banner.querySelector("#installSecondary") as HTMLButtonElement).addEventListener("click", opts.onSecondary);
+
+  // Keep it under the sticky top bar.
+  header.appendChild(banner);
+}
+
+function setupInstallPrompt() {
+  if (!isMobileLike()) return;
+  if (isStandaloneDisplayMode()) return;
+  if (localStorage.getItem(PWA_INSTALL_DISMISSED_KEY) === "1") return;
+
+  const dismiss = () => {
+    localStorage.setItem(PWA_INSTALL_DISMISSED_KEY, "1");
+    document.getElementById("installBanner")?.remove();
+  };
+
+  // iOS Safari has no beforeinstallprompt; show simple instructions.
+  if (isIOS()) {
+    showInstallBanner({
+      title: "Install Codlearn",
+      subtitle: "On iPhone/iPad: tap Share → Add to Home Screen.",
+      primaryLabel: "Got it",
+      secondaryLabel: "Not now",
+      onPrimary: dismiss,
+      onSecondary: dismiss,
+    });
+    return;
+  }
+
+  let deferred: BeforeInstallPromptEvent | null = null;
+
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferred = e as BeforeInstallPromptEvent;
+
+    showInstallBanner({
+      title: "Install Codlearn",
+      subtitle: "Add the app to your home screen for quick access.",
+      primaryLabel: "Install",
+      secondaryLabel: "Not now",
+      onPrimary: async () => {
+        if (!deferred) return;
+        try {
+          await deferred.prompt();
+          await deferred.userChoice;
+          // Either way, don't keep nagging.
+          localStorage.setItem(PWA_INSTALL_DISMISSED_KEY, "1");
+          document.getElementById("installBanner")?.remove();
+          deferred = null;
+        } catch {
+          dismiss();
+        }
+      },
+      onSecondary: dismiss,
     });
   });
 }
@@ -62,6 +186,7 @@ function formatProjectLabel(p: api.Project) {
 
 const els = {
   // top menu
+  leftPanel: document.getElementById("leftPanel") as HTMLElement | null,
   userLine: document.getElementById("userLine") as HTMLDivElement,
   signIn: document.getElementById("signIn") as HTMLButtonElement,
   signOut: document.getElementById("signOut") as HTMLButtonElement,
@@ -90,6 +215,7 @@ const PREVIEW_READY_KEY_PREFIX = "cla_preview_ready_";
 function setAuthButtons(signedIn: boolean) {
   els.signIn.hidden = signedIn;
   els.signOut.hidden = !signedIn;
+  if (els.leftPanel) els.leftPanel.hidden = !signedIn;
 }
 
 function getActiveProjectId(): string | null {
@@ -557,6 +683,7 @@ async function hydrateUsage() {
 
 async function main() {
   registerServiceWorker();
+  setupInstallPrompt();
   wireEvents();
 
   setAuthButtons(false);
