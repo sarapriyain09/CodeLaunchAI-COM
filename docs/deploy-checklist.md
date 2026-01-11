@@ -43,7 +43,9 @@ Stripe (only if billing is enabled):
 If frontend (Vercel) and backend (Render) are split:
 - Proxy preview routes through the public domain to avoid browser warnings about the Render hostname.
 - Add a Vercel rewrite for `/preview/*` (and `/assets/*` for older builds) to point to the backend.
-- This repo includes `vercel.json` with these rewrites (update the destination host if your Render URL changes).
+- This repo includes `vercel.json` with these rewrites (update the destination host if your backend URL changes).
+
+See `docs/render-vercel-split-hosting.md` for the full Render + Vercel setup and the recommended “stable api subdomain” approach.
 
 ## 4) Minimal monitoring
 

@@ -47,6 +47,8 @@ npm --prefix frontend run build:vite:watch
 
 ## Split hosting (frontend on www, backend on Render)
 
+Deployment notes (Vercel rewrites, stable `api.` subdomain, troubleshooting): see `docs/render-vercel-split-hosting.md`.
+
 If the frontend and backend are on different domains, you **must** set the API base at build time:
 
 ```powershell
