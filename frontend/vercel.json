@@ -31,11 +31,11 @@
     { "source": "/preview/:path+/", "destination": "/preview/:path+", "permanent": false }
   ],
   "rewrites": [
-    { "source": "/__rewrite_test", "destination": "https://api.codlearn.com/health" },
-    { "source": "/api", "destination": "https://api.codlearn.com/" },
-    { "source": "/api/:path*", "destination": "https://api.codlearn.com/:path*" },
-    { "source": "/previews/:path*", "destination": "https://api.codlearn.com/previews/:path*" },
-    { "source": "/p/:path*", "destination": "https://api.codlearn.com/p/:path*" },
-    { "source": "/preview/:path*", "destination": "https://api.codlearn.com/preview/:path*" }
+    { "source": "/__rewrite_test", "destination": "https://codelaunchai-com-1.onrender.com/health" },
+    { "source": "/api", "destination": "https://codelaunchai-com-1.onrender.com/" },
+    { "source": "/api/:path*", "destination": "https://codelaunchai-com-1.onrender.com/:path*" },
+    { "source": "/previews/:path*", "destination": "https://codelaunchai-com-1.onrender.com/previews/:path*" },
+    { "source": "/p/:path*", "destination": "https://codelaunchai-com-1.onrender.com/p/:path*" },
+    { "source": "/preview/:path*", "destination": "https://codelaunchai-com-1.onrender.com/preview/:path*" }
   ]
 }
