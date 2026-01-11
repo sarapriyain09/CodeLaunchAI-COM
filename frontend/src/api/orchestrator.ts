@@ -136,18 +136,21 @@ async function http<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-const TOKEN_KEY = "cla_access_token";
+const TOKEN_KEY = "codlearn_access_token";
+const LEGACY_TOKEN_KEY = "cla_access_token";
 
 export function getAccessToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
+  return localStorage.getItem(TOKEN_KEY) ?? localStorage.getItem(LEGACY_TOKEN_KEY);
 }
 
 export function setAccessToken(token: string) {
   localStorage.setItem(TOKEN_KEY, token);
+  localStorage.removeItem(LEGACY_TOKEN_KEY);
 }
 
 export function clearAccessToken() {
   localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(LEGACY_TOKEN_KEY);
 }
 
 export async function authGuest(payload: { email: string; name: string | null }) {

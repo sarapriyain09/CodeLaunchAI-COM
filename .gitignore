@@ -21,5 +21,13 @@ generated/
 # Logs
 **/*.log
 
+# Generated SEO files (served dynamically or generated during static builds)
+robots.txt
+sitemap.xml
+site.xml
+app/robots.txt
+app/sitemap.xml
+app/site.xml
+
 # VS Code
 .vscode/

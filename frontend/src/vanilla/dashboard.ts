@@ -27,7 +27,8 @@ function registerServiceWorker() {
   });
 }
 
-const PWA_INSTALL_DISMISSED_KEY = "cla_pwa_install_dismissed";
+const PWA_INSTALL_DISMISSED_KEY = "codlearn_pwa_install_dismissed";
+const LEGACY_PWA_INSTALL_DISMISSED_KEY = "cla_pwa_install_dismissed";
 
 function isStandaloneDisplayMode(): boolean {
   // iOS Safari uses navigator.standalone.
@@ -96,10 +97,15 @@ function showInstallBanner(opts: {
 function setupInstallPrompt() {
   if (!isMobileLike()) return;
   if (isStandaloneDisplayMode()) return;
-  if (localStorage.getItem(PWA_INSTALL_DISMISSED_KEY) === "1") return;
+  if (
+    localStorage.getItem(PWA_INSTALL_DISMISSED_KEY) === "1" ||
+    localStorage.getItem(LEGACY_PWA_INSTALL_DISMISSED_KEY) === "1"
+  )
+    return;
 
   const dismiss = () => {
     localStorage.setItem(PWA_INSTALL_DISMISSED_KEY, "1");
+    localStorage.removeItem(LEGACY_PWA_INSTALL_DISMISSED_KEY);
     document.getElementById("installBanner")?.remove();
   };
 
@@ -134,6 +140,7 @@ function setupInstallPrompt() {
           await deferred.userChoice;
           // Either way, don't keep nagging.
           localStorage.setItem(PWA_INSTALL_DISMISSED_KEY, "1");
+          localStorage.removeItem(LEGACY_PWA_INSTALL_DISMISSED_KEY);
           document.getElementById("installBanner")?.remove();
           deferred = null;
         } catch {
@@ -207,10 +214,17 @@ const els = {
   chatStatus: document.getElementById("chatStatus") as HTMLDivElement,
 };
 
-const ACTIVE_PROJECT_KEY = "cla_active_project_id";
-const SPEC_KEY_PREFIX = "cla_site_spec_";
-const AWAITING_SPEC_KEY_PREFIX = "cla_site_spec_awaiting_";
-const PREVIEW_READY_KEY_PREFIX = "cla_preview_ready_";
+const ACTIVE_PROJECT_KEY = "codlearn_active_project_id";
+const LEGACY_ACTIVE_PROJECT_KEY = "cla_active_project_id";
+
+const SPEC_KEY_PREFIX = "codlearn_site_spec_";
+const LEGACY_SPEC_KEY_PREFIX = "cla_site_spec_";
+
+const AWAITING_SPEC_KEY_PREFIX = "codlearn_site_spec_awaiting_";
+const LEGACY_AWAITING_SPEC_KEY_PREFIX = "cla_site_spec_awaiting_";
+
+const PREVIEW_READY_KEY_PREFIX = "codlearn_preview_ready_";
+const LEGACY_PREVIEW_READY_KEY_PREFIX = "cla_preview_ready_";
 
 function setAuthButtons(signedIn: boolean) {
   els.signIn.hidden = signedIn;
@@ -222,39 +236,58 @@ function setAuthButtons(signedIn: boolean) {
 }
 
 function getActiveProjectId(): string | null {
-  return localStorage.getItem(ACTIVE_PROJECT_KEY);
+  return localStorage.getItem(ACTIVE_PROJECT_KEY) ?? localStorage.getItem(LEGACY_ACTIVE_PROJECT_KEY);
 }
 
 function setActiveProjectId(id: string) {
   localStorage.setItem(ACTIVE_PROJECT_KEY, id);
+  localStorage.removeItem(LEGACY_ACTIVE_PROJECT_KEY);
 }
 
 function specKey(projectId: string) {
   return `${SPEC_KEY_PREFIX}${projectId}`;
 }
 
+function legacySpecKey(projectId: string) {
+  return `${LEGACY_SPEC_KEY_PREFIX}${projectId}`;
+}
+
 function awaitingSpecKey(projectId: string) {
   return `${AWAITING_SPEC_KEY_PREFIX}${projectId}`;
 }
 
+function legacyAwaitingSpecKey(projectId: string) {
+  return `${LEGACY_AWAITING_SPEC_KEY_PREFIX}${projectId}`;
+}
+
 function getProjectSpec(projectId: string): string | null {
-  const raw = localStorage.getItem(specKey(projectId));
+  const raw = localStorage.getItem(specKey(projectId)) ?? localStorage.getItem(legacySpecKey(projectId));
   return raw && raw.trim() ? raw : null;
 }
 
 function setProjectSpec(projectId: string, spec: string) {
   localStorage.setItem(specKey(projectId), spec.trim());
   localStorage.removeItem(awaitingSpecKey(projectId));
+  localStorage.removeItem(legacySpecKey(projectId));
+  localStorage.removeItem(legacyAwaitingSpecKey(projectId));
   syncGenerateButton();
 }
 
 function isAwaitingSpec(projectId: string): boolean {
-  return localStorage.getItem(awaitingSpecKey(projectId)) === "1";
+  return (
+    localStorage.getItem(awaitingSpecKey(projectId)) === "1" ||
+    localStorage.getItem(legacyAwaitingSpecKey(projectId)) === "1"
+  );
 }
 
 function setAwaitingSpec(projectId: string, awaiting: boolean) {
-  if (awaiting) localStorage.setItem(awaitingSpecKey(projectId), "1");
-  else localStorage.removeItem(awaitingSpecKey(projectId));
+  if (awaiting) {
+    localStorage.setItem(awaitingSpecKey(projectId), "1");
+    localStorage.removeItem(legacyAwaitingSpecKey(projectId));
+  } else {
+    localStorage.removeItem(awaitingSpecKey(projectId));
+    localStorage.removeItem(legacyAwaitingSpecKey(projectId));
+  }
   syncGenerateButton();
 }
 
@@ -276,12 +309,20 @@ function previewReadyKey(projectId: string) {
   return `${PREVIEW_READY_KEY_PREFIX}${projectId}`;
 }
 
+function legacyPreviewReadyKey(projectId: string) {
+  return `${LEGACY_PREVIEW_READY_KEY_PREFIX}${projectId}`;
+}
+
 function isPreviewReady(projectId: string): boolean {
-  return localStorage.getItem(previewReadyKey(projectId)) === "1";
+  return (
+    localStorage.getItem(previewReadyKey(projectId)) === "1" ||
+    localStorage.getItem(legacyPreviewReadyKey(projectId)) === "1"
+  );
 }
 
 function markPreviewReady(projectId: string) {
   localStorage.setItem(previewReadyKey(projectId), "1");
+  localStorage.removeItem(legacyPreviewReadyKey(projectId));
 }
 
 function specQuestions(): string {

@@ -6,7 +6,8 @@ import uuid
 from fastapi import Request
 
 
-COOKIE_NAME = "cla_anon_id"
+COOKIE_NAME = "codlearn_anon_id"
+LEGACY_COOKIE_NAME = "cla_anon_id"
 _ID_RE = re.compile(r"^[a-f0-9]{32}$", re.IGNORECASE)
 
 
@@ -22,5 +23,10 @@ def get_or_create_anon_id(request: Request) -> tuple[str, bool]:
     raw = (request.cookies.get(COOKIE_NAME) or "").strip()
     if raw and _ID_RE.match(raw):
         return raw.lower(), False
+
+    legacy = (request.cookies.get(LEGACY_COOKIE_NAME) or "").strip()
+    if legacy and _ID_RE.match(legacy):
+        # Migrate legacy cookie to the new cookie name.
+        return legacy.lower(), True
 
     return uuid.uuid4().hex, True

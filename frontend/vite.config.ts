@@ -31,6 +31,38 @@ export default defineConfig(({ mode }) => {
           examples: resolve(__dirname, 'examples.html'),
           pricing: resolve(__dirname, 'pricing.html'),
           support: resolve(__dirname, 'support.html'),
+          blogIndex: resolve(__dirname, 'blog/index.html'),
+          blogHowToBuildWebsiteUsingAi: resolve(__dirname, 'blog/how-to-build-a-website-using-ai.html'),
+          blogLearnCodingWithAiNoExperience: resolve(__dirname, 'blog/learn-coding-with-ai-without-experience.html'),
+          blogAiWebsiteBuilderVsTraditionalCoding: resolve(__dirname, 'blog/ai-website-builder-vs-traditional-coding.html'),
+          blogStudentsBuildRealProjectsFasterAiTools: resolve(
+            __dirname,
+            'blog/how-students-can-build-real-projects-faster-using-ai-tools.html',
+          ),
+          blogBuildWebAppWithoutCodingAiMythOrReality: resolve(
+            __dirname,
+            'blog/build-a-web-app-without-coding-using-ai-myth-or-reality.html',
+          ),
+          blogBestAiToolsForStudentsLearnWebDevelopment: resolve(
+            __dirname,
+            'blog/best-ai-tools-for-students-to-learn-web-development.html',
+          ),
+          blogFromIdeaToWebsiteAiBuildAppsFaster: resolve(
+            __dirname,
+            'blog/from-idea-to-website-how-ai-helps-you-build-apps-faster.html',
+          ),
+          blogWhyLearningWithAiFutureCodingEducation: resolve(
+            __dirname,
+            'blog/why-learning-with-ai-is-the-future-of-coding-education.html',
+          ),
+          blogFirstWebAppUsingAiIn30Minutes: resolve(
+            __dirname,
+            'blog/how-to-create-your-first-web-app-using-ai-in-30-minutes.html',
+          ),
+          blogAiForBeginnersNonTechnicalBuildWebsites: resolve(
+            __dirname,
+            'blog/ai-for-beginners-how-non-technical-users-can-build-websites.html',
+          ),
         },
       },
     },

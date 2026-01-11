@@ -1,15 +1,15 @@
-# CodeLaunchAI — Lovable.dev Inspired Builder
+# Codlearn — Lovable.dev Inspired Builder
 
 ## Local run (backend-only mode)
 
 From the repo root:
 
 ```powershell
-cd D:\Five_Pillar\07Software\SplendidTechnology\codelaunchcom
+cd <repo_root>
 backend\orchestrator\.venv\Scripts\python -m uvicorn app.main:app --app-dir backend\orchestrator --reload --port 7080
 ```
 
-This document captures the launch plan for rebuilding CodeLaunchAI as a Lovable.dev style experience: chat with AI, generate a blueprint, see a live preview, and deploy/export.
+This document captures the launch plan for rebuilding Codlearn as a Lovable.dev style experience: chat with AI, generate a blueprint, see a live preview, and deploy/export.
 
 ---
 
@@ -97,7 +97,7 @@ Once these are in place, we can iterate toward Lovable-level polish (templates, 
 
 ---
 
-## 8-Week Build Plan — CodeLaunchAI (Lovable Style)
+## 8-Week Build Plan — Codlearn (Lovable Style)
 
 ### Week 1 — Foundation & Project Setup
 - Backend: finalize repo layout (`backend/gpt-chat`, `backend/orchestrator`), env config, CORS, logging, `/health`.

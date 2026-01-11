@@ -8,7 +8,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 WORKSPACES_DIR = Path(os.getenv('WORKSPACES_DIR', BASE_DIR / 'generated_workspaces'))
 
-# Optional canonical public origin for the frontend (e.g. https://www.codelaunchai.com).
+# Optional canonical public origin for the frontend (e.g. https://www.codlearn.com).
 # When set, the backend can redirect users away from the Render hostname to avoid
 # browser phishing warnings.
 PUBLIC_APP_ORIGIN = os.getenv('PUBLIC_APP_ORIGIN', '').strip()

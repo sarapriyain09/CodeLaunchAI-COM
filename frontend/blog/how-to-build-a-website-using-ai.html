@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="%BASE_URL%icon.svg" />
+    <link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <title>How to Build a Website Using AI (Beginner Step-by-Step Guide) · Codlearn</title>
+    <meta
+      name="description"
+      content="Learn how to build a website using AI with a beginner step-by-step process: define your idea, generate structure, customize design, and publish fast using Codlearn."
+    />
+
+    <link rel="canonical" href="%VITE_PUBLIC_SITE_URL%%BASE_URL%blog/how-to-build-a-website-using-ai.html" />
+
+    <meta property="og:title" content="How to Build a Website Using AI (Beginner Step-by-Step Guide)" />
+    <meta
+      property="og:description"
+      content="A beginner-friendly guide to building a website using AI: idea → structure → design → testing."
+    />
+    <meta property="og:url" content="%VITE_PUBLIC_SITE_URL%%BASE_URL%blog/how-to-build-a-website-using-ai.html" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": "How to Build a Website Using AI (Beginner Step-by-Step Guide)",
+        "description": "Learn how to build a website using AI with a beginner step-by-step process: define your idea, generate structure, customize design, and publish fast using Codlearn.",
+        "datePublished": "2026-01-11",
+        "dateModified": "2026-01-11",
+        "inLanguage": "en",
+        "author": { "@type": "Organization", "name": "Codlearn" },
+        "publisher": { "@type": "Organization", "name": "Codlearn" },
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": "%VITE_PUBLIC_SITE_URL%%BASE_URL%blog/how-to-build-a-website-using-ai.html"
+        },
+        "url": "%VITE_PUBLIC_SITE_URL%%BASE_URL%blog/how-to-build-a-website-using-ai.html"
+      }
+    </script>
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Do I need coding experience to build a website using AI?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. AI tools can generate the initial HTML/CSS and structure. Basic editing skills help, but beginners can start by describing the site in plain English and iterating." 
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What pages should a beginner website include?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Most beginner sites start with Home, About, and Contact. Add pages like Projects/Services or Pricing only if they support the site’s goal." 
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How do I get better results from AI website generation?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Be specific about purpose, target audience, required pages, and the primary call-to-action. Then request small improvements one at a time (layout, copy, responsiveness)." 
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does AI replace learning web development?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "AI doesn’t replace learning—it accelerates it. You can build first, then learn fundamentals by inspecting and editing the generated code." 
+            }
+          }
+        ]
+      }
+    </script>
+
+    <script>
+      (function () {
+        const raw = "%VITE_PUBLIC_SITE_URL%";
+        let base = (raw || "").trim();
+        if (!base || base === "%VITE_PUBLIC_SITE_URL%") base = window.location.origin;
+        try {
+          const parsed = new URL(base, window.location.origin);
+          if (parsed.origin !== window.location.origin) base = window.location.origin;
+        } catch {
+          base = window.location.origin;
+        }
+        // @ts-ignore
+        window.__PUBLIC_SITE_URL__ = base;
+
+        const scope = "%BASE_URL%";
+        const normalizedScope = typeof scope === "string" ? (scope.endsWith("/") ? scope : `${scope}/`) : "/";
+        const canonicalPath = `${normalizedScope}blog/how-to-build-a-website-using-ai.html`;
+        const canonical = `${base}${canonicalPath.startsWith("/") ? canonicalPath : `/${canonicalPath}`}`;
+        const canonicalLink = document.querySelector('link[rel="canonical"]');
+        if (canonicalLink) canonicalLink.setAttribute("href", canonical);
+        const ogUrl = document.querySelector('meta[property="og:url"]');
+        if (ogUrl) ogUrl.setAttribute("content", canonical);
+      })();
+    </script>
+  </head>
+  <body class="lovable-bg">
+    <div class="landing-legacy">
+      <div class="page-shell">
+        <header class="topBar" aria-label="Top navigation">
+          <div class="topBarInner">
+            <a class="topBrand" href="%BASE_URL%">Codlearn</a>
+
+            <nav class="topNav" aria-label="Primary">
+              <a class="topNavLink" href="%BASE_URL%">Home</a>
+              <a class="topNavLink" href="%BASE_URL%features.html">Features</a>
+              <a class="topNavLink" href="%BASE_URL%how-it-works.html">How it Works</a>
+              <a class="topNavLink" href="%BASE_URL%examples.html">Examples</a>
+              <a class="topNavLink" href="%BASE_URL%blog/index.html">Blog</a>
+              <a class="topNavLink" href="%BASE_URL%pricing.html">Pricing</a>
+              <a class="topNavLink" href="%BASE_URL%subscribe.html">Subscribe</a>
+              <a class="topNavLink" href="%BASE_URL%support.html">Support</a>
+            </nav>
+
+            <div class="topActions" aria-label="Account">
+              <button id="signIn" class="topBtn" type="button">Log in</button>
+              <button id="signOut" class="topBtn" type="button" hidden>Sign out</button>
+            </div>
+          </div>
+        </header>
+
+        <div class="site-wrap">
+          <section>
+            <h1 class="section-title">How to Build a Website Using AI (Beginner Step-by-Step Guide)</h1>
+            <p class="section-subtitle">A practical workflow to go from idea to a live website — faster than traditional setup.</p>
+
+            <div class="card blog-card">
+              <div class="blog-meta">Updated Jan 11, 2026 · Beginner</div>
+
+              <p>
+                Building a website no longer requires years of coding experience. With modern AI tools, beginners can turn ideas into
+                working websites faster than ever before.
+              </p>
+              <p>This guide explains <strong>how you can build a website using AI</strong>, even if you have no technical background.</p>
+
+              <div class="blog-inline-cta">
+                <p style="margin: 0">
+                  Want to follow along?
+                  <a href="%BASE_URL%">Learn coding with AI using Codlearn</a>
+                  and generate your first website in minutes.
+                </p>
+                <div class="cta-row">
+                  <a class="cta primary" href="%BASE_URL%subscribe.html">Try CodLearn Free</a>
+                  <a class="cta secondary" href="%BASE_URL%features.html">See features</a>
+                </div>
+              </div>
+
+              <h2>Step 1: Define Your Website Idea Clearly</h2>
+              <p>Before using AI, you must describe:</p>
+              <ul>
+                <li><strong>Purpose</strong> of the website (business, portfolio, blog)</li>
+                <li><strong>Pages needed</strong> (Home, About, Contact, etc.)</li>
+                <li><strong>Target audience</strong></li>
+              </ul>
+              <p>AI works best when instructions are clear.</p>
+
+              <h2>Step 2: Use an AI-Powered Platform</h2>
+              <p>AI platforms like <strong>Codlearn</strong> allow you to:</p>
+              <ul>
+                <li>Describe your website in plain English</li>
+                <li>Generate page layouts automatically</li>
+                <li>Create HTML, CSS, and basic logic</li>
+              </ul>
+              <p>No manual setup required.</p>
+
+              <div class="blog-inline-cta">
+                <p style="margin: 0">After you define your idea, the fastest next step is to generate a first draft and iterate.</p>
+                <div class="cta-row">
+                  <a class="cta primary" href="%BASE_URL%subscribe.html">Try CodLearn Free</a>
+                </div>
+              </div>
+
+              <h2>Step 3: Generate the Website Structure</h2>
+              <p>AI helps create:</p>
+              <ul>
+                <li>Page layout</li>
+                <li>Navigation menus</li>
+                <li>Basic content structure</li>
+              </ul>
+              <p>You can preview the site instantly and request changes using simple prompts.</p>
+
+              <h2>Step 4: Customize Design and Content</h2>
+              <p>You can:</p>
+              <ul>
+                <li>Change colors and fonts</li>
+                <li>Add images and text</li>
+                <li>Ask AI to improve wording or layout</li>
+              </ul>
+              <p>This is where beginners save the most time.</p>
+
+              <h2>Step 5: Test and Improve</h2>
+              <p>AI can help you:</p>
+              <ul>
+                <li>Fix layout issues</li>
+                <li>Improve mobile responsiveness</li>
+                <li>Optimize page speed</li>
+              </ul>
+
+              <h2>Why AI Is Ideal for Beginners</h2>
+              <ul>
+                <li>No coding barrier</li>
+                <li>Faster learning curve</li>
+                <li>Immediate visual results</li>
+                <li>Learn while building</li>
+              </ul>
+
+              <h2>Final Thoughts</h2>
+              <p>
+                AI does not replace learning — it <strong>accelerates it</strong>. Beginners can now build real websites first and
+                understand code later.
+              </p>
+
+              <h2>FAQ</h2>
+              <h3>Do I need coding experience to build a website using AI?</h3>
+              <p>No. AI can generate the first version. You can learn faster by making small edits as you go.</p>
+              <h3>What pages should a beginner website include?</h3>
+              <p>Start with Home, About, and Contact. Add more only when you need them.</p>
+              <h3>How do I get better results from AI generation?</h3>
+              <p>Give clear requirements (purpose, pages, CTA) and request small changes iteratively.</p>
+
+              <div class="cta-row" style="margin-top: 18px">
+                <a class="cta primary" href="%BASE_URL%subscribe.html">Try CodLearn Free</a>
+                <a class="cta secondary" href="%BASE_URL%blog/index.html">More beginner guides</a>
+              </div>
+
+              <div class="blog-related" aria-label="Related posts">
+                <a href="%BASE_URL%blog/learn-coding-with-ai-without-experience.html">Learn coding with AI (no experience)</a>
+                <a href="%BASE_URL%blog/ai-website-builder-vs-traditional-coding.html">AI website builder vs traditional coding</a>
+              </div>
+            </div>
+          </section>
+
+          <footer>
+            <div>© 2026 Codlearn</div>
+            <ul>
+              <li><a href="%BASE_URL%blog/index.html">Blog</a></li>
+              <li><a href="%BASE_URL%support.html">Support</a></li>
+              <li><a href="%BASE_URL%pricing.html">Pricing</a></li>
+              <li><a href="%BASE_URL%">App</a></li>
+            </ul>
+          </footer>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/vanilla/landing.ts"></script>
+  </body>
+</html>

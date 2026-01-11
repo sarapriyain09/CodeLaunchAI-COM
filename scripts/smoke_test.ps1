@@ -4,7 +4,7 @@ param(
   [Alias('BaseUrl')]
   [string]$BackendUrl = "http://127.0.0.1:7080",
 
-  # Optional separate frontend host (e.g., https://www.codelaunchai.com).
+  # Optional separate frontend host (e.g., https://www.codlearn.com).
   [Parameter(Mandatory=$false)]
   [string]$FrontendUrl = ""
 

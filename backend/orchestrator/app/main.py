@@ -8,8 +8,9 @@ from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse
-from fastapi.responses import FileResponse
+from fastapi.responses import PlainTextResponse
 from fastapi.responses import JSONResponse
+from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -45,6 +46,8 @@ from app.services.usage_context import (
 from app.services.request_ip import get_request_client_ip
 from app.services.rate_limiter import check_rate_limit, rate_limits_enabled
 from app.services.anon_identity import COOKIE_NAME as ANON_COOKIE_NAME, get_or_create_anon_id
+from app.config import PUBLIC_APP_ORIGIN
+from app.services.public_sitemap import generate_robots_txt, generate_sitemap_xml
 
 
 def _parse_iso8601(s: str | None) -> datetime | None:
@@ -61,7 +64,7 @@ def _parse_iso8601(s: str | None) -> datetime | None:
     except Exception:
         return None
 
-app = FastAPI(title='CodeLaunch Orchestrator', version='0.1.0')
+app = FastAPI(title='Codlearn Orchestrator', version='0.1.0')
 
 
 @app.middleware("http")
@@ -189,7 +192,7 @@ def _startup() -> None:
     # Provides clearer logs + optional retry/fail-open.
     init_db_startup()
 
-# Workspace root (…/codelaunchcom). Used to serve public static pages in dev/prod.
+# Workspace root (repo root). Used to serve public static pages in dev/prod.
 _WORKSPACE_ROOT = Path(__file__).resolve().parents[3]
 
 def _parse_cors_origins(raw: str | None) -> list[str]:
@@ -241,6 +244,28 @@ def public_home() -> RedirectResponse:
     if app_base_url:
         return RedirectResponse(url=app_base_url)
     return RedirectResponse(url='/app/')
+
+
+@app.get('/robots.txt', include_in_schema=False)
+def public_robots(request: Request) -> PlainTextResponse:
+    origin = (PUBLIC_APP_ORIGIN or str(request.base_url)).rstrip('/')
+    content = generate_robots_txt(origin=origin)
+    return PlainTextResponse(content, media_type='text/plain; charset=utf-8')
+
+
+@app.get('/sitemap.xml', include_in_schema=False)
+def public_sitemap(request: Request) -> Response:
+    origin = (PUBLIC_APP_ORIGIN or str(request.base_url)).rstrip('/')
+    content = generate_sitemap_xml(workspace_root=_WORKSPACE_ROOT, origin=origin)
+    return Response(content=content, media_type='application/xml; charset=utf-8')
+
+
+@app.get('/site.xml', include_in_schema=False)
+def public_site_xml(request: Request) -> Response:
+    # Back-compat: some deploys referenced /site.xml.
+    origin = (PUBLIC_APP_ORIGIN or str(request.base_url)).rstrip('/')
+    content = generate_sitemap_xml(workspace_root=_WORKSPACE_ROOT, origin=origin)
+    return Response(content=content, media_type='application/xml; charset=utf-8')
 
 
 @app.get('/subscribe.html', include_in_schema=False)

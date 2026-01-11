@@ -64,9 +64,7 @@ def main() -> int:
         p = (workspace_path / rel).resolve()
         print(rel, "OK" if p.exists() else "MISSING")
 
-    repo_generated = pathlib.Path(
-        r"d:/Five_Pillar/07Software/SplendidTechnology/codelaunchcom/generated"
-    ).resolve()
+    repo_generated = (pathlib.Path(__file__).resolve().parents[1] / "generated").resolve()
     print("repo generated dir", repo_generated)
     print(
         "workspace under generated?",

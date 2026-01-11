@@ -27,7 +27,7 @@ def _normalize_blueprint_payload(payload: Any) -> Any:
     # branding: must include product_name
     branding = obj.get('branding')
     if isinstance(branding, str):
-        obj['branding'] = {'product_name': branding.strip()[:60] or 'CodeLaunchAI Project'}
+        obj['branding'] = {'product_name': branding.strip()[:60] or 'Codlearn Project'}
     elif isinstance(branding, dict):
         b = dict(branding)
         # Common alternatives: name/title/company/brand
@@ -40,7 +40,7 @@ def _normalize_blueprint_payload(payload: Any) -> Any:
                     break
         if not isinstance(product_name, str) or not product_name.strip():
             # If the LLM mistakenly placed styling info inside branding, still provide a name.
-            product_name = 'CodeLaunchAI Project'
+            product_name = 'Codlearn Project'
         out_branding: dict[str, Any] = {
             'product_name': product_name.strip()[:60],
             'tagline': b.get('tagline') if isinstance(b.get('tagline'), str) else None,
@@ -211,7 +211,7 @@ def _fallback_blueprint(goal: str, context: Dict[str, Any] | None) -> Blueprint:
     wants_pricing = any(word in text for word in ['pricing', 'plans', 'subscription', 'subscribe'])
     wants_blog = 'blog' in text
 
-    product_name = 'CodeLaunchAI Project'
+    product_name = 'Codlearn Project'
     if context:
         branding = context.get('branding')
         if isinstance(branding, dict):

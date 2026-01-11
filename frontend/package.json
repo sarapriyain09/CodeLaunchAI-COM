@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "node -e \"console.error('Vite dev server is disabled. Use backend-only mode: run \\\"npm --prefix frontend run build:vite:watch\\\" and open http://127.0.0.1:7080/app/'); process.exit(1)\"",
-    "build": "tsc -b && vite build",
+    "build": "node ./scripts/generate_public_seo.mjs && tsc -b && vite build",
     "build:static": "tsc -b && vite build",
-    "build:backend": "tsc -b && vite build --mode backend",
+    "build:backend": "node ./scripts/generate_public_seo.mjs && tsc -b && vite build --mode backend",
     "build:watch": "tsc -b --watch --preserveWatchOutput",
     "build:vite:watch": "vite build --watch --mode backend",
     "lint": "eslint .",

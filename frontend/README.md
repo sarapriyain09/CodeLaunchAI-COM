@@ -50,8 +50,8 @@ npm --prefix frontend run build:vite:watch
 If the frontend and backend are on different domains, you **must** set the API base at build time:
 
 ```powershell
-$env:VITE_ORCH_BASE_URL='https://codelaunchai-com-1.onrender.com'
-$env:VITE_PUBLIC_SITE_URL='https://www.codelaunchai.com'
+$env:VITE_ORCH_BASE_URL='https://api.codlearn.com'
+$env:VITE_PUBLIC_SITE_URL='https://www.codlearn.com'
 npm --prefix frontend run build:backend
 ```
 

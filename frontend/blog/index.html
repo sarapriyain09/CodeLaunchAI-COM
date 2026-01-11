@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="%BASE_URL%icon.svg" />
+    <link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <title>Codlearn · Blog</title>
+    <meta
+      name="description"
+      content="SEO-first guides on building websites and learning to code with AI. Beginner-friendly tutorials and comparisons to help you ship faster with Codlearn."
+    />
+
+    <link rel="canonical" href="%VITE_PUBLIC_SITE_URL%%BASE_URL%blog/index.html" />
+
+    <meta property="og:title" content="Codlearn · Blog" />
+    <meta
+      property="og:description"
+      content="SEO-first guides on building websites and learning to code with AI. Beginner-friendly tutorials and comparisons to help you ship faster with Codlearn."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="%VITE_PUBLIC_SITE_URL%%BASE_URL%blog/index.html" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "name": "Codlearn Blog",
+        "description": "SEO-first guides on building websites and learning to code with AI. Beginner-friendly tutorials and comparisons to help you ship faster with Codlearn.",
+        "inLanguage": "en",
+        "url": "%VITE_PUBLIC_SITE_URL%%BASE_URL%blog/index.html",
+        "isPartOf": {
+          "@type": "WebSite",
+          "name": "Codlearn",
+          "url": "%VITE_PUBLIC_SITE_URL%%BASE_URL%"
+        },
+        "mainEntity": {
+          "@type": "ItemList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "url": "%VITE_PUBLIC_SITE_URL%%BASE_URL%blog/how-to-build-a-website-using-ai.html"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "url": "%VITE_PUBLIC_SITE_URL%%BASE_URL%blog/learn-coding-with-ai-without-experience.html"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "url": "%VITE_PUBLIC_SITE_URL%%BASE_URL%blog/ai-website-builder-vs-traditional-coding.html"
+            },
+            {
+              "@type": "ListItem",
+              "position": 4,
+              "url": "%VITE_PUBLIC_SITE_URL%%BASE_URL%blog/how-students-can-build-real-projects-faster-using-ai-tools.html"
+            },
+            {
+              "@type": "ListItem",
+              "position": 5,
+              "url": "%VITE_PUBLIC_SITE_URL%%BASE_URL%blog/build-a-web-app-without-coding-using-ai-myth-or-reality.html"
+            },
+            {
+              "@type": "ListItem",
+              "position": 6,
+              "url": "%VITE_PUBLIC_SITE_URL%%BASE_URL%blog/best-ai-tools-for-students-to-learn-web-development.html"
+            },
+            {
+              "@type": "ListItem",
+              "position": 7,
+              "url": "%VITE_PUBLIC_SITE_URL%%BASE_URL%blog/from-idea-to-website-how-ai-helps-you-build-apps-faster.html"
+            },
+            {
+              "@type": "ListItem",
+              "position": 8,
+              "url": "%VITE_PUBLIC_SITE_URL%%BASE_URL%blog/why-learning-with-ai-is-the-future-of-coding-education.html"
+            },
+            {
+              "@type": "ListItem",
+              "position": 9,
+              "url": "%VITE_PUBLIC_SITE_URL%%BASE_URL%blog/how-to-create-your-first-web-app-using-ai-in-30-minutes.html"
+            },
+            {
+              "@type": "ListItem",
+              "position": 10,
+              "url": "%VITE_PUBLIC_SITE_URL%%BASE_URL%blog/ai-for-beginners-how-non-technical-users-can-build-websites.html"
+            }
+          ]
+        }
+      }
+    </script>
+
+    <script>
+      (function () {
+        const raw = "%VITE_PUBLIC_SITE_URL%";
+        let base = (raw || "").trim();
+        if (!base || base === "%VITE_PUBLIC_SITE_URL%") base = window.location.origin;
+        try {
+          const parsed = new URL(base, window.location.origin);
+          if (parsed.origin !== window.location.origin) base = window.location.origin;
+        } catch {
+          base = window.location.origin;
+        }
+        // @ts-ignore
+        window.__PUBLIC_SITE_URL__ = base;
+
+        const scope = "%BASE_URL%";
+        const normalizedScope = typeof scope === "string" ? (scope.endsWith("/") ? scope : `${scope}/`) : "/";
+        const canonicalPath = `${normalizedScope}blog/index.html`;
+        const canonical = `${base}${canonicalPath.startsWith("/") ? canonicalPath : `/${canonicalPath}`}`;
+        const canonicalLink = document.querySelector('link[rel="canonical"]');
+        if (canonicalLink) canonicalLink.setAttribute("href", canonical);
+        const ogUrl = document.querySelector('meta[property="og:url"]');
+        if (ogUrl) ogUrl.setAttribute("content", canonical);
+      })();
+    </script>
+  </head>
+  <body class="lovable-bg">
+    <div class="landing-legacy">
+      <div class="page-shell">
+        <header class="topBar" aria-label="Top navigation">
+          <div class="topBarInner">
+            <a class="topBrand" href="%BASE_URL%">Codlearn</a>
+
+            <nav class="topNav" aria-label="Primary">
+              <a class="topNavLink" href="%BASE_URL%">Home</a>
+              <a class="topNavLink" href="%BASE_URL%features.html">Features</a>
+              <a class="topNavLink" href="%BASE_URL%how-it-works.html">How it Works</a>
+              <a class="topNavLink" href="%BASE_URL%examples.html">Examples</a>
+              <a class="topNavLink" href="%BASE_URL%blog/index.html">Blog</a>
+              <a class="topNavLink" href="%BASE_URL%pricing.html">Pricing</a>
+              <a class="topNavLink" href="%BASE_URL%subscribe.html">Subscribe</a>
+              <a class="topNavLink" href="%BASE_URL%support.html">Support</a>
+            </nav>
+
+            <div class="topActions" aria-label="Account">
+              <button id="signIn" class="topBtn" type="button">Log in</button>
+              <button id="signOut" class="topBtn" type="button" hidden>Sign out</button>
+            </div>
+          </div>
+        </header>
+
+        <div class="site-wrap">
+          <section>
+            <h1 class="section-title">Codlearn Blog</h1>
+            <p class="section-subtitle">
+              Practical, beginner-friendly guides. Build first, learn faster.
+              <a href="%BASE_URL%">Learn coding with AI using Codlearn</a>.
+            </p>
+
+            <div class="feature-grid">
+              <div class="card">
+                <h3>How to Build a Website Using AI (Beginner Step-by-Step Guide)</h3>
+                <p>Define your idea, generate structure, customize, and ship — even with zero experience.</p>
+                <a class="cta primary" href="%BASE_URL%blog/how-to-build-a-website-using-ai.html">Read the guide</a>
+              </div>
+              <div class="card">
+                <h3>Learn Coding with AI: Is It Really Possible Without Prior Experience?</h3>
+                <p>What AI can teach you, what it can’t replace, and how to learn by building real projects.</p>
+                <a class="cta primary" href="%BASE_URL%blog/learn-coding-with-ai-without-experience.html">Read the post</a>
+              </div>
+              <div class="card">
+                <h3>AI Website Builder vs Traditional Coding: Which Is Better for Beginners?</h3>
+                <p>A clear comparison — plus the best hybrid approach for beginners who want real results.</p>
+                <a class="cta primary" href="%BASE_URL%blog/ai-website-builder-vs-traditional-coding.html">Read the comparison</a>
+              </div>
+              <div class="card">
+                <h3>How Students Can Build Real Projects Faster Using AI Tools</h3>
+                <p>A practical workflow for shipping portfolio-ready projects while learning the fundamentals.</p>
+                <a class="cta primary" href="%BASE_URL%blog/how-students-can-build-real-projects-faster-using-ai-tools.html">Read the guide</a>
+              </div>
+              <div class="card">
+                <h3>Build a Web App Without Coding Using AI – Myth or Reality?</h3>
+                <p>What “no-code” really means, what still requires thinking, and how to get results fast.</p>
+                <a class="cta primary" href="%BASE_URL%blog/build-a-web-app-without-coding-using-ai-myth-or-reality.html">Read the post</a>
+              </div>
+              <div class="card">
+                <h3>Best AI Tools for Students to Learn Web Development</h3>
+                <p>The student-friendly toolkit: code explanation, debugging, UI generation, and practice loops.</p>
+                <a class="cta primary" href="%BASE_URL%blog/best-ai-tools-for-students-to-learn-web-development.html">See the list</a>
+              </div>
+              <div class="card">
+                <h3>From Idea to Website: How AI Helps You Build Apps Faster</h3>
+                <p>Turn vague ideas into working pages, flows, and features—then iterate with feedback.</p>
+                <a class="cta primary" href="%BASE_URL%blog/from-idea-to-website-how-ai-helps-you-build-apps-faster.html">Read the guide</a>
+              </div>
+              <div class="card">
+                <h3>Why Learning with AI Is the Future of Coding Education</h3>
+                <p>Build-first learning, faster feedback, and more inclusive onramps for beginners.</p>
+                <a class="cta primary" href="%BASE_URL%blog/why-learning-with-ai-is-the-future-of-coding-education.html">Read the essay</a>
+              </div>
+              <div class="card">
+                <h3>How to Create Your First Web App Using AI in 30 Minutes</h3>
+                <p>A time-boxed beginner plan: choose an app, generate the MVP, polish, and share.</p>
+                <a class="cta primary" href="%BASE_URL%blog/how-to-create-your-first-web-app-using-ai-in-30-minutes.html">Follow the steps</a>
+              </div>
+              <div class="card">
+                <h3>AI for Beginners: How Non-Technical Users Can Build Websites</h3>
+                <p>A plain-English approach: prompts, previews, and safe edits—without getting overwhelmed.</p>
+                <a class="cta primary" href="%BASE_URL%blog/ai-for-beginners-how-non-technical-users-can-build-websites.html">Read the guide</a>
+              </div>
+            </div>
+
+            <div class="card blog-inline-cta" style="margin-top: 26px">
+              <h3 style="margin: 0 0 6px">Ready to build?</h3>
+              <p style="margin: 0">
+                Try Codlearn free and generate your first site in minutes. Then learn by editing real code.
+              </p>
+              <div class="cta-row">
+                <a class="cta primary" href="%BASE_URL%subscribe.html">Try CodLearn Free</a>
+                <a class="cta secondary" href="%BASE_URL%features.html">See features</a>
+              </div>
+            </div>
+          </section>
+
+          <footer>
+            <div>© 2026 Codlearn</div>
+            <ul>
+              <li><a href="%BASE_URL%blog/index.html">Blog</a></li>
+              <li><a href="%BASE_URL%support.html">Support</a></li>
+              <li><a href="%BASE_URL%pricing.html">Pricing</a></li>
+              <li><a href="%BASE_URL%">App</a></li>
+            </ul>
+          </footer>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/vanilla/landing.ts"></script>
+  </body>
+</html>

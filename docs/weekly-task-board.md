@@ -1,4 +1,4 @@
-# CodeLaunchAI Weekly Task Board
+# Codlearn Weekly Task Board
 
 A practical, solo-friendly task board derived from the 8-week roadmap. Track status with the checkbox next to each item.
 

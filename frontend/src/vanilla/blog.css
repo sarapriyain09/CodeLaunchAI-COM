@@ -1,0 +1,76 @@
+/* Blog styles (scoped to landing-legacy pages only). */
+
+.landing-legacy .blog-card {
+  max-width: 860px;
+}
+
+.landing-legacy .blog-meta {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-bottom: 18px;
+}
+
+.landing-legacy .blog-card h2 {
+  margin: 28px 0 10px;
+  font-family: "Space Grotesk", Inter, sans-serif;
+  font-size: 1.45rem;
+}
+
+.landing-legacy .blog-card h3 {
+  margin: 18px 0 8px;
+  font-family: "Space Grotesk", Inter, sans-serif;
+  font-size: 1.15rem;
+}
+
+.landing-legacy .blog-card p {
+  margin: 0 0 14px;
+  line-height: 1.75;
+  color: var(--text-muted);
+}
+
+.landing-legacy .blog-card ul {
+  margin: 0 0 14px;
+  padding-left: 20px;
+  color: var(--text-muted);
+}
+
+.landing-legacy .blog-card li {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.landing-legacy .blog-card strong {
+  color: var(--text-primary);
+}
+
+.landing-legacy .blog-inline-cta {
+  margin: 18px 0 6px;
+  padding: 16px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.landing-legacy .blog-inline-cta .cta-row {
+  margin-top: 12px;
+}
+
+.landing-legacy .blog-related {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.landing-legacy .blog-related a {
+  text-decoration: none;
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.landing-legacy .blog-related a:hover {
+  transform: translateY(-1px);
+}
