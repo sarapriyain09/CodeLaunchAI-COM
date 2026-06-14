@@ -6,6 +6,47 @@ Monorepo for Codlearn/CodeLaunchAI web app, including:
 - Backend orchestrator API (FastAPI)
 - Deployment and operations docs
 
+## What This Web App Does
+
+CodeLaunchAI helps users build web apps with AI from idea to preview.
+
+- Converts a plain-English idea into a structured app blueprint (`/plan`)
+- Generates a React + TypeScript + Tailwind project from that blueprint (`/generate`)
+- Lets users chat with an AI assistant to refine requirements (`/chat`)
+- Applies iterative updates to existing projects using natural-language instructions (`/projects/{id}/patch`)
+- Materializes, builds, and serves project previews (`/projects/{id}/materialize`, `/projects/{id}/build`, `/previews/{id}`)
+- Includes authentication, subscription billing, usage tracking, and rate limiting for production readiness
+
+## Software Used (Including AI)
+
+### Frontend
+
+- Vite
+- TypeScript
+- Tailwind CSS
+- ESLint
+
+### Backend
+
+- Python
+- FastAPI
+- Uvicorn
+- Pydantic
+- HTTPX
+- SQLAlchemy + PostgreSQL (psycopg)
+
+### AI and Generation
+
+- OpenAI Chat Completions API for planning, chat, and code-content generation
+- Default LLM model via env: `OPENAI_MODEL` (current default in code: `gpt-4o-mini`)
+- Optional fallback gateway (`GPT_CHAT_BASE_URL`) when direct OpenAI key is not set
+- Optional OpenAI Images API flow to replace placeholder images with generated PNG assets
+
+### Product Integrations
+
+- Stripe for subscriptions and webhook-based billing lifecycle updates
+- JWT-based authentication with email/password and Google auth support
+
 ## Repository Structure
 
 - `app/` - Built frontend assets and static app pages served in production
